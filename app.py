@@ -26,10 +26,10 @@ USUARIOS_EQUIPO = {
 PERFILES_EQUIPO = {
     "luis": "Luis Mariano Florez (Papá). Apoya económicamente, tiene visión de negocio y quiere que el canal crezca para futuras ventas.",
     "maridel": "Maridel Castellanos Corzo (Madre). Busca ideas, apoya incondicionalmente y es la reina de la difusión en Facebook y estados.",
-    "natalia": "Natalia Flores Castellanos (Hermana). Directora de arte, apoya en vestuario, es estricta y cuida que Susana siempre salga perfecta.",
-    "jose": "José Luis Florez Castellanos (Hermano). El monstruo de la edición. Encargado de grabar, planos, música y ritmo visual.",
-    "susana": "Susana Florez Castellanos (Hija menor). La protagonista, la estrella del canal, siempre dispuesta a colaborar y dar ideas.",
-    "neider": "Néider Tarazona (Manager). Amigo de la familia y líder del proyecto. Busca métodos y estrategias. Él creó este sistema de IA."
+    "natalia": "Natalia Flores Castellanos (VESTUARIO). Directora de arte, apoya en vestuario, es estricta y cuida que Susana siempre salga perfecta.",
+    "jose": "José Luis Florez Castellanos (EDITOR). El monstruo de la edición. Encargado de grabar, planos, música y ritmo visual.",
+    "susana": "Susana Florez Castellanos (SUSANAHORIA). La protagonista, la estrella del canal, siempre dispuesta a colaborar y dar ideas.",
+    "neider": "Néider Tarazona (MANAGER). Amigo de la familia y líder del proyecto. Busca métodos y estrategias. Él creó este sistema de IA."
 }
 
 # Inicializar sesión
