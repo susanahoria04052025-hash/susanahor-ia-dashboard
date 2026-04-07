@@ -22,19 +22,19 @@ USUARIOS_EQUIPO = {
 }
 
 PERFILES_EQUIPO = {
-    "luis": "Luis Mariano Florez (Papá). Apoya económicamente, tiene visión de negocio y quiere que el canal crezca para futuras ventas.",
-    "maridel": "Maridel Castellanos Corzo (Madre). Busca ideas, apoya incondicionalmente y es la reina de la difusión en Facebook y estados.",
-    "natalia": "Natalia Flores Castellanos (Hermana). Directora de arte, apoya en vestuario, es estricta y cuida que Susana siempre salga perfecta.",
-    "jose": "José Luis Florez Castellanos (Hermano). El monstruo de la edición. Encargado de grabar, planos, música y ritmo visual.",
-    "susana": "Susana Florez Castellanos (Hija menor). La protagonista, la estrella del canal, siempre dispuesta a colaborar y dar ideas.",
-    "neider": "Néider Tarazona (Manager). Amigo de la familia y líder del proyecto. Busca métodos y estrategias. Él creó este sistema de IA."
+    "luis": "Luis Mariano Florez (Papá). Apoya económicamente, tiene visión de negocio.",
+    "maridel": "Maridel Castellanos Corzo (Madre). Busca ideas, reina de la difusión.",
+    "natalia": "Natalia Flores Castellanos (Hermana). Directora de arte, apoya en vestuario.",
+    "jose": "José Luis Florez Castellanos (Hermano). El monstruo de la edición.",
+    "susana": "Susana Florez Castellanos (Hija menor). La protagonista (10 años).",
+    "neider": "Néider Tarazona (Manager). Amigo y líder del proyecto."
 }
 
 if 'usuario_activo' not in st.session_state:
     st.session_state['usuario_activo'] = None
 
 # ==========================================
-# NUEVO: LÓGICA DEL TABLERO DE IDEAS (BOMBILLOS)
+# LÓGICA DEL TABLERO DE IDEAS
 # ==========================================
 ARCHIVO_TABLERO = "tablero_ideas.json"
 
@@ -46,13 +46,12 @@ def cargar_tablero():
 
 def guardar_en_tablero(idea_nueva):
     tablero = cargar_tablero()
-    # Insertamos la nueva idea al principio de la lista
     tablero.insert(0, idea_nueva)
     with open(ARCHIVO_TABLERO, "w") as f:
         json.dump(tablero, f)
 
 # ==========================================
-# 3. DISEÑO CORPORATIVO (APPLE STYLE)
+# 3. DISEÑO CORPORATIVO 
 # ==========================================
 estilo_apple = """
 <style>
@@ -63,9 +62,8 @@ estilo_apple = """
     .stButton>button { background-color: #00C853; color: white !important; border-radius: 12px; border: none; padding: 10px 24px; font-weight: 600; transition: all 0.3s ease; }
     .stButton>button:hover { background-color: #009624; transform: scale(1.02); }
     .caja-login { background-color: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #E5E5EA; text-align: center; backdrop-filter: blur(10px); }
-    
-    /* Estilo para las tarjetas del tablero de ideas */
     .tarjeta-idea { background-color: #FFFFFF; border-left: 5px solid #FFCC00; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 15px;}
+    .tarjeta-auditoria { background-color: #F4F4F5; border-left: 5px solid #FF3B30; padding: 20px; border-radius: 10px; margin-top: 20px;}
 </style>
 """
 st.markdown(estilo_apple, unsafe_allow_html=True)
@@ -80,7 +78,6 @@ def pantalla_login():
         st.markdown("<div class='caja-login'>", unsafe_allow_html=True)
         st.markdown("<h1 style='text-align: center; font-size: 3rem;'>🥕</h1>", unsafe_allow_html=True)
         st.markdown("<h2 style='text-align: center;'>Acceso al Sistema</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='text-align: center; color: #8E8E93 !important;'>Ingresa tus credenciales</p>", unsafe_allow_html=True)
         
         usuario_input = st.text_input("Usuario").lower()
         password_input = st.text_input("Contraseña", type="password") 
@@ -116,27 +113,83 @@ def aplicacion_principal():
 
     st.sidebar.markdown("---")
     st.sidebar.header("Módulos del Sistema")
-    modulo = st.sidebar.radio("Navegación:", ["Análisis de Vistas", "Generador de SEO", "Laboratorio de Ideas 💡"])
+    modulo = st.sidebar.radio("Navegación:", ["Análisis y Auditoría 📈", "Generador de SEO ✨", "Laboratorio de Ideas 💡"])
 
-    # --- MÓDULO 1: ANALÍTICAS ---
-    if modulo == "Análisis de Vistas":
-        st.subheader("📊 Módulo de Analíticas Reales")
-        if st.button("🚀 Extraer Datos Ahora"):
-            with st.spinner("Conectando con YouTube..."):
+    # ==========================================
+    # --- MÓDULO 1: EL AUDITOR IMPLACABLE ---
+    # ==========================================
+    if modulo == "Análisis y Auditoría 📈":
+        st.subheader("📊 Métricas y Auditoría del Canal")
+        st.write("Extrae tus datos actuales y deja que la IA audite tus últimos videos para darle tareas al equipo.")
+        
+        if st.button("🚀 Extraer Datos y Auditar Canal"):
+            with st.spinner("1. Leyendo base de datos de YouTube..."):
                 try:
-                    respuesta = youtube.channels().list(part='snippet,statistics', id=CANAL_ID).execute()
-                    if 'items' in respuesta:
-                        stats = respuesta['items'][0]['statistics']
-                        st.success("¡Datos obtenidos con éxito!")
+                    # A. Extraer datos generales y carpeta secreta de subidas
+                    resp_canal = youtube.channels().list(part='snippet,statistics,contentDetails', id=CANAL_ID).execute()
+                    if 'items' in resp_canal:
+                        datos_canal = resp_canal['items'][0]
+                        stats = datos_canal['statistics']
+                        id_carpeta_subidas = datos_canal['contentDetails']['relatedPlaylists']['uploads']
+                        
+                        # Mostrar métricas base
                         col1, col2, col3 = st.columns(3)
                         col1.metric("👥 Suscriptores", stats['subscriberCount'])
                         col2.metric("👁️ Vistas Totales", stats['viewCount'])
                         col3.metric("🎬 Videos Subidos", stats['videoCount'])
-                except Exception as e:
-                    st.error(f"Error interno: {e}")
 
+                        with st.spinner("2. Extrayendo los últimos 10 videos y sus vistas..."):
+                            # B. Buscar los últimos 10 videos
+                            resp_playlist = youtube.playlistItems().list(part='snippet', playlistId=id_carpeta_subidas, maxResults=10).execute()
+                            ids_videos = [item['snippet']['resourceId']['videoId'] for item in resp_playlist['items']]
+                            titulos = [item['snippet']['title'] for item in resp_playlist['items']]
+                            
+                            # C. Buscar las vistas exactas de esos 10 videos
+                            resp_videos = youtube.videos().list(part='statistics', id=','.join(ids_videos)).execute()
+                            vistas = [item['statistics'].get('viewCount', '0') for item in resp_videos['items']]
+                            
+                            # D. Crear el reporte en texto para la IA
+                            reporte_vistas = ""
+                            for i in range(len(titulos)):
+                                reporte_vistas += f"- Video: '{titulos[i]}' | Vistas: {vistas[i]}\n"
+                            
+                            with st.expander("Ver datos crudos extraídos (Clic para abrir)"):
+                                st.text(reporte_vistas)
+
+                        with st.spinner("3. El CTO está auditando los resultados..."):
+                            # E. Mandar a Gemini a auditar
+                            genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                            modelo_auditor = genai.GenerativeModel('gemini-2.5-flash')
+                            
+                            prompt_auditor = f"""
+                            Eres el CTO y Auditor de 'SUSANAHORIA' (Canal infantil/familiar de campo).
+                            Acabo de extraer el rendimiento de nuestros últimos 10 videos:
+                            {reporte_vistas}
+                            
+                            Haz un "Informe Ejecutivo de Auditoría" muy directo.
+                            1. Identifica rápidamente qué patrón o tipo de video tuvo MÁS vistas y cuál tuvo MENOS.
+                            2. Dale 1 consejo estratégico y exigente (pero motivador) a cada miembro basándote en esos resultados:
+                            - A José (Edición y retención visual)
+                            - A Natalia (Estética y portada visual)
+                            - A Néider y Maridel (Temáticas para los próximos guiones)
+                            - A Luis (Perspectiva de crecimiento)
+                            """
+                            
+                            auditoria_ia = modelo_auditor.generate_content(prompt_auditor).text
+                            
+                            st.markdown("<div class='tarjeta-auditoria'>", unsafe_allow_html=True)
+                            st.markdown("### 🧠 Informe del Auditor Implacable")
+                            st.markdown(auditoria_ia)
+                            st.markdown("</div>", unsafe_allow_html=True)
+                            st.balloons() # Pequeña celebración visual de éxito
+
+                except Exception as e:
+                    st.error(f"Error en el sistema de auditoría: {e}")
+
+    # ==========================================
     # --- MÓDULO 2: GENERADOR SEO ---
-    elif modulo == "Generador de SEO":
+    # ==========================================
+    elif modulo == "Generador de SEO ✨":
         st.subheader("✨ Módulo de SEO Mágico")
         idea = st.text_area("¿De qué trata el video?", placeholder="Ej: Alquilamos un caballo...")
         if st.button("🌟 Generar Paquete SEO"):
@@ -151,33 +204,21 @@ def aplicacion_principal():
             else:
                 st.warning("Escribe la idea primero.")
                 
-    # --- MÓDULO 3: LABORATORIO DE IDEAS (PRIVADO + PÚBLICO) ---
+    # ==========================================
+    # --- MÓDULO 3: LABORATORIO DE IDEAS ---
+    # ==========================================
     elif modulo == "Laboratorio de Ideas 💡":
-        
-        # Pestañas Superiores
         tab1, tab2 = st.tabs(["💬 Mi Consultor Privado", "🗂️ Tablero del Equipo"])
         
-        # EL ADN DE LA IA
         ADN_CANAL = f"""
         INSTRUCCIÓN MAESTRA: Eres el 'CTO y Consultor IA' de la familia 'SUSANAHORIA'.
-        NUESTRO EQUIPO:
-        1. Luis Mariano Florez (Papá): Financia, busca negocio.
-        2. Maridel Castellanos (Mamá): Difusión, busca ideas.
-        3. Natalia Flores (Hermana): Directora de Arte.
-        4. José Luis Florez (Hermano): Editor Maestro.
-        5. Susana Florez (Hija menor): La ESTRELLA (10 años).
-        6. Néider Tarazona: Manager del canal.
-        EL CANAL: Vida en el campo, valores cristianos, naturaleza. Cero clickbait tóxico.
+        NUESTRO EQUIPO: Luis (Papá, negocios), Maridel (Mamá, difusión), Natalia (Directora Arte), José (Editor), Susana (Estrella), Néider (Manager).
+        EL CANAL: Vida en el campo, valores cristianos, naturaleza.
         CONTEXTO ACTUAL: Te habla {nombre_perfil} EN PRIVADO. Ayúdalo a desarrollar su idea.
         """
 
-        # ================================
-        # PESTAÑA 1: CHAT PRIVADO
-        # ================================
         with tab1:
             st.markdown("### Tu espacio privado")
-            st.write("Nadie más ve este chat. Cocina tu idea aquí con la IA.")
-            
             if "chat_privado" not in st.session_state:
                 st.session_state.chat_privado = []
 
@@ -186,7 +227,6 @@ def aplicacion_principal():
                     st.markdown(msj["texto"])
 
             mensaje_nuevo = st.chat_input("Consulta con tu CTO privado...")
-
             if mensaje_nuevo:
                 with st.chat_message("user", avatar="👤"):
                     st.markdown(mensaje_nuevo)
@@ -197,18 +237,15 @@ def aplicacion_principal():
                         try:
                             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
                             modelo_chat = genai.GenerativeModel('gemini-2.5-flash')
-                            
                             contexto = ADN_CANAL + "\n\nCHAT PRIVADO:\n"
                             for m in st.session_state.chat_privado:
                                 contexto += f"{m['rol']}: {m['texto']}\n"
-                            
                             respuesta_ia = modelo_chat.generate_content(contexto).text
                             st.markdown(respuesta_ia)
                             st.session_state.chat_privado.append({"rol": "assistant", "texto": respuesta_ia})
                         except Exception as e:
                             st.error(f"Error: {e}")
             
-            # --- BOTÓN PARA PUBLICAR AL TABLERO ---
             st.markdown("---")
             if len(st.session_state.chat_privado) > 0:
                 if st.button("💡 Resumir chat y enviar al Tablero del Equipo", type="primary"):
@@ -216,41 +253,24 @@ def aplicacion_principal():
                         try:
                             genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
                             modelo_resumen = genai.GenerativeModel('gemini-2.5-flash')
-                            
-                            # Le pedimos a la IA que lea el chat privado y lo resuma
                             texto_a_resumir = ""
                             for m in st.session_state.chat_privado:
                                 texto_a_resumir += f"{m['rol']}: {m['texto']}\n"
-                                
-                            prompt_resumen = f"Lee este chat entre {nombre_perfil} y la IA. Extrae SOLO LA IDEA PRINCIPAL o CONCLUSIÓN a la que llegaron. Redáctalo en un solo párrafo corto, profesional y motivador para que el resto del equipo lo lea. Empieza diciendo 'Propuesta de {nombre_perfil}:'. CHAT: {texto_a_resumir}"
-                            
+                            prompt_resumen = f"Lee este chat entre {nombre_perfil} y la IA. Extrae SOLO LA IDEA PRINCIPAL o CONCLUSIÓN a la que llegaron. Redáctalo en un solo párrafo corto, profesional y motivador para el equipo. Empieza diciendo 'Propuesta de {nombre_perfil}:'. CHAT: {texto_a_resumir}"
                             resumen_final = modelo_resumen.generate_content(prompt_resumen).text
-                            
-                            # Guardamos en la base de datos pública
                             guardar_en_tablero({"autor": nombre_perfil, "idea": resumen_final})
                             st.success("¡Tu idea pulida ya está en el Tablero del Equipo!")
                         except Exception as e:
                             st.error("Error al resumir.")
 
-        # ================================
-        # PESTAÑA 2: TABLERO PÚBLICO
-        # ================================
         with tab2:
             st.markdown("### 🗂️ Ideas Aprobadas del Equipo")
-            st.write("Aquí aparecen los resúmenes de las ideas que el equipo ha trabajado con la IA.")
-            
             tablero_actual = cargar_tablero()
-            
             if len(tablero_actual) == 0:
-                st.info("Aún no hay ideas en el tablero. ¡Ve a tu chat privado y genera la primera!")
+                st.info("Aún no hay ideas en el tablero.")
             else:
                 for item in tablero_actual:
-                    st.markdown(f"""
-                    <div class='tarjeta-idea'>
-                        <h4>💡 Idea de: {item['autor']}</h4>
-                        <p style='color: #4A4A4A;'>{item['idea']}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"<div class='tarjeta-idea'><h4>💡 Idea de: {item['autor']}</h4><p style='color: #4A4A4A;'>{item['idea']}</p></div>", unsafe_allow_html=True)
 
 # ==========================================
 if st.session_state['usuario_activo'] is None:
