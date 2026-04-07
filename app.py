@@ -151,7 +151,7 @@ def aplicacion_principal():
             
             st.info("Para auditar datos privados, la IA necesita permiso de la cuenta dueña del canal.")
             # ⚠️ NUEVO 2: Cambié target="_self" por target="_top" para romper el iframe de Hostinger y evitar bloqueos.
-            st.markdown(f'<a href="{url_autorizacion}" target="_top" style="display:inline-block; padding:12px 24px; background-color:#4285F4; color:white; border-radius:12px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(66, 133, 244, 0.3);">🔐 Iniciar sesión con Google</a>', unsafe_allow_html=True)
+            st.markdown(f'<a href="{url_autorizacion}" target="_blank" style="display:inline-block; padding:12px 24px; background-color:#4285F4; color:white; border-radius:12px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(66, 133, 244, 0.3);">🔐 Iniciar sesión con Google (Pestaña Nueva)</a>', unsafe_allow_html=True)
 
         else:
             st.success("✅ Conectado exitosamente a la bóveda privada de YouTube.")
