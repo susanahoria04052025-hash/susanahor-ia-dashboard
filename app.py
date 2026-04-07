@@ -10,7 +10,7 @@ YOUTUBE_API_KEY = st.secrets["YOUTUBE_API_KEY"]
 youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 # !!! REEMPLAZA ESTO CON EL ID DEL CANAL DE SUSANAHORIA (Empieza por UC...) !!!
-CANAL_ID = "UCbp_1QxjyZT8cG7_Ojy4NUg" 
+CANAL_ID = "UCbp_1QxjyzT8cG7_0jy4NUg" 
 
 # --- INTERFAZ VISUAL ---
 st.title("🥕 SUSANAHOR IA: Centro de Mando")
