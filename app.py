@@ -64,40 +64,57 @@ elif modulo == "Generador de SEO":
     st.subheader("✨ Módulo de SEO Mágico (Con tecnología Gemini AI)")
     st.write("Escribe una idea cruda y nuestro CTO IA la convertirá en oro para el algoritmo.")
     
-    idea = st.text_area("¿De qué trata el video?", placeholder="Ej: Fuimos al zoológico de Barranquilla y a Susana la persiguió un mono...")
+    # --- BOTÓN DE DIAGNÓSTICO SECRETO PARA EL CTO ---
+    with st.expander("🛠️ Herramientas de CTO (Clic para abrir)"):
+        if st.button("🔍 Diagnosticar Modelos Disponibles"):
+            with st.spinner("Preguntándole a Google..."):
+                try:
+                    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                    modelos = []
+                    for m in genai.list_models():
+                        if 'generateContent' in m.supported_generation_methods:
+                            modelos.append(m.name)
+                    st.success("✅ Conexión exitosa. Modelos que Google autoriza para tu llave:")
+                    st.write(modelos)
+                except Exception as e:
+                    st.error(f"Error al verificar la llave: {e}")
+    # ------------------------------------------------
+
+    idea = st.text_area("¿De qué trata el video?", placeholder="Ej: Alquilamos un caballo para la historia de Saulo de Tarso...")
     
     if st.button("🌟 Generar Paquete SEO"):
         if idea:
             with st.spinner("Despertando al cerebro de Gemini... consultando el algoritmo..."):
                 try:
-                    # 1. Conectando con la IA de Google usando tu clave secreta de Gemini
+                    # 1. Conectando
                     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                    modelo_ia = genai.GenerativeModel('gemini-1.5-flash')
                     
-                    # 2. El Prompt Mágico (Instrucciones precisas para la IA)
+                    # 2. Seleccionando el modelo base más seguro garantizado por Google
+                    modelo_ia = genai.GenerativeModel('gemini-1.5-flash') 
+                    
+                    # 3. El Prompt Mágico 
                     instruccion_cto = f"""
                     Eres el CTO y Manager de contenido del canal de YouTube 'SUSANAHORIA'. 
                     Este es un canal familiar donde una niña de 10 años (Susana) explora la naturaleza, su granja, reflexiones de vida y valores cristianos, de forma sana y aventurera.
                     
-                    Mi idea para el próximo video es: {idea}
+                    Mi idea para el video es: {idea}
                     
-                    Tu trabajo es generarme lo siguiente optimizado para el algoritmo de YouTube (para atraer clics sin engañar):
-                    
-                    1. TRES (3) OPCIONES DE TÍTULOS: Que sean atractivos, que generen curiosidad, ideal para público familiar. Que no superen los 60 caracteres.
-                    2. DESCRIPCIÓN OPTIMIZADA: Los primeros 2 renglones súper gancheros, luego un resumen, llamado a suscribirse y reflexiones de la naturaleza.
-                    3. LISTA DE TAGS (Etiquetas): Dame 15 palabras clave, separadas por comas, combinando búsqueda larga (ej. "aventura en granja para niños") y corta (ej. "susanahoria").
+                    Tu trabajo es generarme lo siguiente optimizado para SEO:
+                    1. TRES (3) OPCIONES DE TÍTULOS (Atractivos y aptos para familia).
+                    2. DESCRIPCIÓN OPTIMIZADA.
+                    3. LISTA DE 15 TAGS separados por comas.
                     """
                     
-                    # 3. Enviando la petición a Gemini
+                    # 4. Generando contenido
                     respuesta_ia = modelo_ia.generate_content(instruccion_cto)
                     
-                    # 4. Mostrando la respuesta en pantalla con estilo
+                    # 5. Mostrando
                     st.success("¡Análisis SEO completado! 🎯")
                     st.markdown("---")
                     st.write(respuesta_ia.text)
                     
                 except Exception as e:
-                    st.error(f"Error de conexión con la mente maestra (Gemini): Verifica si guardaste tu llave en secrets. Detalle: {e}")
+                    st.error(f"El error persiste. Detalle exacto para diagnóstico: {e}")
         else:
             st.warning("¡Oye! Tienes que escribirme la idea primero. ✍️")
 
