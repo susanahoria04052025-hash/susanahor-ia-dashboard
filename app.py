@@ -155,11 +155,72 @@ def aplicacion_principal():
             else:
                 st.warning("Escribe la idea primero.")
                 
-    # --- MÓDULO 3 ---
+    # ==========================================
+    # --- MÓDULO 3: SALA DE IDEAS (CHAT IA CON MEMORIA) ---
+    # ==========================================
     elif modulo == "Chat IA":
-        st.subheader("🤖 Consultor CTO IA (Módulo en Construcción)")
+        st.subheader("🤖 Consultor CTO IA (Sala de Ideas)")
+        st.write("Tu CTO tiene en cuenta los valores del canal, el nicho y quién eres en el equipo.")
+        
+        # 1. Definimos el ADN del Canal (El Entrenamiento)
+        ADN_CANAL = f"""
+        INSTRUCCIÓN MAESTRA: Eres el CTO y Consultor Estratégico del canal de YouTube 'SUSANAHORIA'.
+        
+        INFORMACIÓN DEL CANAL:
+        - Protagonista: Susana, una niña de 10 años muy carismática, apoyada por sus papás.
+        - Nicho: Vida en el campo, naturaleza, animales, aventuras en la granja, valores familiares y reflexiones cristianas.
+        - Misión: Entretener y educar sanamente a las familias, fomentando el amor por la naturaleza y los buenos valores.
+        - Tono: Profesional, motivador, creativo, pero siempre manteniendo la inocencia y el respeto familiar. NUNCA sugieras clickbait engañoso, bromas pesadas o contenido que no sea apto para niños.
+        
+        USUARIO ACTUAL:
+        Te está hablando el miembro del equipo logeado como: '{st.session_state['usuario_activo']}'.
+        Adapta tus consejos a su rol (si es admin, habla de estrategia; si es guionista, habla de retención y guiones; si es editor, habla de ritmo visual).
+        """
+
+        # 2. Inicializar la memoria del chat en esta sesión
+        if "memoria_chat" not in st.session_state:
+            st.session_state.memoria_chat = []
+
+        # 3. Mostrar el historial de la conversación en pantalla
+        for mensaje in st.session_state.memoria_chat:
+            with st.chat_message(mensaje["rol"]):
+                st.markdown(mensaje["texto"])
+
+        # 4. Caja de texto para que el usuario escriba
+        pregunta_usuario = st.chat_input("Escribe tu idea o pregunta al CTO aquí...")
+
+        if pregunta_usuario:
+            # A. Mostrar la pregunta del usuario inmediatamente
+            with st.chat_message("user"):
+                st.markdown(pregunta_usuario)
+            
+            # B. Guardar la pregunta en la memoria
+            st.session_state.memoria_chat.append({"rol": "user", "texto": pregunta_usuario})
+
+            # C. Conectar con Gemini y enviarle la memoria + el ADN
+            with st.chat_message("assistant"):
+                with st.spinner("El CTO está analizando tu solicitud..."):
+                    try:
+                        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                        modelo_chat = genai.GenerativeModel('gemini-2.5-flash')
+                        
+                        # Construimos el contexto completo invisible para enviar a la IA
+                        historial_invisible = ADN_CANAL + "\n\nHISTORIAL DE LA CONVERSACIÓN:\n"
+                        for m in st.session_state.memoria_chat:
+                            historial_invisible += f"{m['rol']}: {m['texto']}\n"
+                        
+                        # Pedimos la respuesta
+                        respuesta = modelo_chat.generate_content(historial_invisible)
+                        
+                        # Mostramos y guardamos la respuesta
+                        st.markdown(respuesta.text)
+                        st.session_state.memoria_chat.append({"rol": "assistant", "texto": respuesta.text})
+                        
+                    except Exception as e:
+                        st.error(f"Error de conexión neuronal: {e}")
 
 # ==========================================
+
 # 6. LÓGICA DEL CEREBRO BARRERA
 # ==========================================
 # El código siempre lee esta parte al inicio. Si nadie se ha logeado, lanza la pantalla 4. Si están logeados, lanza la 5.
