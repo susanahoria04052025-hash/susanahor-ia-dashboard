@@ -33,29 +33,22 @@ if modulo == "Análisis de Vistas":
                     id=CANAL_ID
                 ).execute()
                 
-                # Extrayendo la información
-                canal = respuesta['items'][0]
-                stats = canal['statistics']
-                
-                # --- MAGIA VISUAL: TARJETAS DE MÉTRICAS ---
-                st.success("¡Datos obtenidos con éxito!")
-                st.markdown("### El Pulso del Canal Hoy")
-                
-                # st.columns divide la pantalla en 3 cajas iguales
-                col1, col2, col3 = st.columns(3)
-                col1.metric(label="👥 Suscriptores", value=stats['subscriberCount'], delta="Activado")
-                col2.metric(label="👁️ Vistas Totales", value=stats['viewCount'])
-                col3.metric(label="🎬 Videos Subidos", value=stats['videoCount'])
+                # --- NUEVA LÓGICA DE IA INTELIGENTE ---
+                if 'items' not in respuesta:
+                    st.warning(f"⚠️ YouTube aceptó la llave, pero dice que el ID '{CANAL_ID}' no existe o está oculto. Verifica el ID.")
+                else:
+                    # Extrayendo la información
+                    canal = respuesta['items'][0]
+                    stats = canal['statistics']
+                    
+                    # --- MAGIA VISUAL: TARJETAS DE MÉTRICAS ---
+                    st.success("¡Datos obtenidos con éxito!")
+                    st.markdown("### El Pulso del Canal Hoy")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric(label="👥 Suscriptores", value=stats['subscriberCount'])
+                    col2.metric(label="👁️ Vistas Totales", value=stats['viewCount'])
+                    col3.metric(label="🎬 Videos Subidos", value=stats['videoCount'])
 
             except Exception as e:
-                st.error(f"Error al conectar con YouTube: {e}")
-
-elif modulo == "Generador de SEO":
-    st.subheader("✨ Módulo de SEO Mágico (Próximamente Gemini)")
-    idea = st.text_input("Ingresa de qué trata el próximo video:")
-    if st.button("Generar Títulos"):
-        st.success("Aún construyendo la conexión con la mente de Gemini...")
-
-elif modulo == "Chat IA":
-    st.subheader("🤖 Consultor CTO IA (Próximamente Gemini)")
-    st.chat_message("assistant").write("¡Hola equipo! En la Fase 2 tendré voz.")
+                st.error(f"Error interno del sistema: {e}")
