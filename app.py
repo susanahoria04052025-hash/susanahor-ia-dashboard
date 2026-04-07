@@ -113,22 +113,6 @@ if modulo == "Análisis de Vistas":
 elif modulo == "Generador de SEO":
     st.subheader("✨ Módulo de SEO Mágico (Con tecnología Gemini AI)")
     st.write("Escribe una idea cruda y nuestro CTO IA la convertirá en oro para el algoritmo.")
-    
-    # --- BOTÓN DE DIAGNÓSTICO SECRETO PARA EL CTO ---
-    with st.expander("🛠️ Herramientas de CTO (Clic para abrir)"):
-        if st.button("🔍 Diagnosticar Modelos Disponibles"):
-            with st.spinner("Preguntándole a Google..."):
-                try:
-                    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                    modelos = []
-                    for m in genai.list_models():
-                        if 'generateContent' in m.supported_generation_methods:
-                            modelos.append(m.name)
-                    st.success("✅ Conexión exitosa. Modelos que Google autoriza para tu llave:")
-                    st.write(modelos)
-                except Exception as e:
-                    st.error(f"Error al verificar la llave: {e}")
-    # ------------------------------------------------
 
     idea = st.text_area("¿De qué trata el video?", placeholder="Ej: Alquilamos un caballo para la historia de Saulo de Tarso...")
     
