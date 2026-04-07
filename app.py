@@ -3,7 +3,7 @@ from googleapiclient.discovery import build
 import google.generativeai as genai
 import json 
 import os
-from datetime import datetime # NUEVO: Para manejar el calendario
+from datetime import datetime
 
 # ==========================================
 # 1. CONFIGURACIÓN INICIAL
@@ -28,7 +28,7 @@ if 'usuario_activo' not in st.session_state:
     st.session_state['usuario_activo'] = None
 
 # ==========================================
-# LÓGICA DE BASES DE DATOS JSON (Tablero y Calendario)
+# LÓGICA DE BASES DE DATOS JSON
 # ==========================================
 ARCHIVO_TABLERO = "tablero_ideas.json"
 ARCHIVO_CALENDARIO = "calendario_equipo.json"
@@ -50,19 +50,11 @@ estilo_apple = """
 <style>
     .stApp { background-color: #FAFAFC; background-image: radial-gradient(#D1D1D6 1px, transparent 1px); background-size: 20px 20px; }
     [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E5E5EA; }
-    /* ARREGLO FLECHAS: Solo aplicamos color a textos específicos, no a divs genéricos */
     h1, h2, h3, p, label { color: #1C1C1E !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; }
     [data-testid="metric-container"] { background-color: #FFFFFF; border: 1px solid #E5E5EA; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
     .stButton>button { background-color: #00C853; color: white !important; border-radius: 12px; border: none; padding: 10px 24px; font-weight: 600; transition: all 0.3s ease; }
     .stButton>button:hover { background-color: #009624; transform: scale(1.02); }
     .caja-login { background-color: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #E5E5EA; text-align: center; backdrop-filter: blur(10px); }
-    
-    /* TARJETAS DEL CALENDARIO */
-    .cal-tarjeta { padding: 15px; border-radius: 10px; margin-bottom: 10px; color: white !important; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
-    .cal-tarjeta p, .cal-tarjeta h4 { color: white !important; margin: 0; }
-    .bg-verde { background-color: #00C853; border-left: 8px solid #009624;} /* Subir */
-    .bg-morado { background-color: #AF52DE; border-left: 8px solid #8E24AA;} /* Grabar */
-    .bg-amarillo { background-color: #FFCC00; border-left: 8px solid #F57F17;} /* Idea */
 </style>
 """
 st.markdown(estilo_apple, unsafe_allow_html=True)
@@ -111,7 +103,7 @@ def aplicacion_principal():
     st.sidebar.header("Módulos del Sistema")
     modulo = st.sidebar.radio("Navegación:", ["Análisis y Auditoría 📈", "Generador de SEO ✨", "Laboratorio de Ideas 💡", "📅 Cronograma de Producción"])
 
-    # --- MÓDULOS 1 Y 2 (OCULTOS AQUÍ PARA AHORRAR ESPACIO, PERO IGUALES QUE ANTES) ---
+    # --- MÓDULO 1: ANALÍTICA ---
     if modulo == "Análisis y Auditoría 📈":
         st.subheader("📊 Métricas y Auditoría del Canal")
         if st.button("🚀 Extraer Datos y Auditar Canal"):
@@ -143,6 +135,7 @@ def aplicacion_principal():
                         st.markdown(f"<div style='background:#F4F4F5; padding:20px; border-radius:10px; border-left:5px solid #FF3B30;'>{auditoria}</div>", unsafe_allow_html=True)
                 except Exception as e: st.error(f"Error: {e}")
 
+    # --- MÓDULO 2: SEO ---
     elif modulo == "Generador de SEO ✨":
         st.subheader("✨ Módulo de SEO Mágico")
         idea = st.text_area("¿De qué trata el video?")
@@ -150,7 +143,8 @@ def aplicacion_principal():
             with st.spinner("Despertando IA..."):
                 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
                 st.write(genai.GenerativeModel('gemini-2.5-flash').generate_content(f"Crea SEO para SUSANAHORIA sobre: {idea}. 3 títulos, descripción y 15 tags.").text)
-                
+
+    # --- MÓDULO 3: LABORATORIO DE IDEAS ---
     elif modulo == "Laboratorio de Ideas 💡":
         tab1, tab2 = st.tabs(["💬 Mi Consultor Privado", "🗂️ Tablero del Equipo"])
         with tab1:
@@ -180,20 +174,16 @@ def aplicacion_principal():
             for item in cargar_json(ARCHIVO_TABLERO):
                 st.markdown(f"<div style='background:white; padding:15px; border-left:5px solid #FFCC00; margin-bottom:10px;'><b>De: {item['autor']}</b><br>{item['idea']}</div>", unsafe_allow_html=True)
 
-    # ==========================================
-    # --- MÓDULO 4: CALENDARIO DE PRODUCCIÓN (VERSIÓN GRID PRO) ---
-    # ==========================================
+    # --- MÓDULO 4: CALENDARIO DE PRODUCCIÓN ---
     elif modulo == "📅 Cronograma de Producción":
         st.subheader("📅 Cronograma Interactivo de SUSANAHORIA")
         st.write("Visualiza el mes completo. Asigna colores y tareas para mantener al equipo sincronizado.")
         
-        # Botón de Sincronización en tiempo real (Para que el equipo actualice la vista)
         col_sync, col_vacio = st.columns([1, 4])
         with col_sync:
             if st.button("🔄 Sincronizar Calendario"):
                 st.rerun()
 
-        # 1. FORMULARIO PARA AGREGAR NUEVA TAREA
         with st.expander("➕ Añadir nuevo video o tarea al cronograma", expanded=False):
             col1, col2, col3 = st.columns([1, 2, 1])
             with col1:
@@ -201,11 +191,7 @@ def aplicacion_principal():
             with col2:
                 nombre_tarea = st.text_input("Nombre del Video / Tarea", placeholder="Ej: Video de Saulo de Tarso")
             with col3:
-                tipo_tarea = st.selectbox("Estado", [
-                    "🟩 SUBIR VIDEO (Listo)", 
-                    "🟪 GRABAR / EDITAR", 
-                    "🟨 IDEA / FLEXIBLE"
-                ])
+                tipo_tarea = st.selectbox("Estado", ["🟩 SUBIR VIDEO (Listo)", "🟪 GRABAR / EDITAR", "🟨 IDEA / FLEXIBLE"])
                 
             if st.button("Agendar en el Calendario", type="primary"):
                 if nombre_tarea:
@@ -223,17 +209,14 @@ def aplicacion_principal():
                 else:
                     st.warning("Debes escribir el nombre del video.")
 
-        # 2. EL CALENDARIO VISUAL DE CUADRÍCULA (GRID)
         st.markdown("---")
         agenda_actual = cargar_json(ARCHIVO_CALENDARIO)
         
-        # Transformamos nuestra base de datos al formato que lee el Calendario Visual
         eventos_calendario = []
         for item in agenda_actual:
-            # Asignar los colores HEX exactos según la selección
-            color_fondo = "#00C853" # Verde por defecto
-            if "🟪" in item['tipo']: color_fondo = "#AF52DE" # Morado
-            elif "🟨" in item['tipo']: color_fondo = "#FFCC00" # Amarillo
+            color_fondo = "#00C853" 
+            if "🟪" in item['tipo']: color_fondo = "#AF52DE" 
+            elif "🟨" in item['tipo']: color_fondo = "#FFCC00" 
 
             eventos_calendario.append({
                 "title": f"{item['tarea']} ({item['responsable'].split()[0]})",
@@ -242,59 +225,22 @@ def aplicacion_principal():
                 "borderColor": color_fondo,
             })
 
-        # Configuración del motor del calendario
         opciones_calendario = {
-            "headerToolbar": {
-                "left": "prev,next today",
-                "center": "title",
-                "right": "dayGridMonth,timeGridWeek"
-            },
-            "initialView": "dayGridMonth", # Vista de mes por defecto
-            "locale": "es", # Calendario en Español
+            "headerToolbar": {"left": "prev,next today", "center": "title", "right": "dayGridMonth,timeGridWeek"},
+            "initialView": "dayGridMonth",
+            "locale": "es",
         }
 
-        # CSS para que el texto de los eventos sea blanco y legible
         css_calendario = """
             .fc-event-title { font-weight: bold; color: white !important; font-size: 0.85rem; padding: 2px;}
-            .fc-event-time { display: none; } /* Ocultar la hora, solo nos importa el día */
+            .fc-event-time { display: none; } 
         """
 
-        # Importamos e imprimimos el calendario en pantalla
         from streamlit_calendar import calendar
         calendar(events=eventos_calendario, options=opciones_calendario, custom_css=css_calendario)
 
 # ==========================================
 # 6. LÓGICA DE BARRERA
-# ==========================================
-if st.session_state['usuario_activo'] is None:
-    pantalla_login()
-else:
-    aplicacion_principal()
-
-        # 2. MOSTRAR LA LÍNEA DE TIEMPO VISUAL
-        st.markdown("---")
-        st.markdown("### 📋 Agenda Próxima")
-        agenda_actual = cargar_json(ARCHIVO_CALENDARIO)
-        
-        if len(agenda_actual) == 0:
-            st.info("El calendario está vacío. ¡Programa el primer video arriba!")
-        else:
-            # Mostrar como tarjetas de colores
-            for item in agenda_actual:
-                fecha_formateada = datetime.strptime(item['fecha'], "%Y-%m-%d").strftime("%d de %b, %Y")
-                
-                st.markdown(f"""
-                <div class='cal-tarjeta {item['color']}'>
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h4 style="margin:0;">{item['tarea']}</h4>
-                        <span style="font-size:0.9rem; opacity:0.9;">🗓️ {fecha_formateada}</span>
-                    </div>
-                    <p style="margin-top:5px; font-size:0.9rem; font-weight:normal;">
-                        Estado: {item['tipo']} | Agendado por: {item['responsable']}
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
-
 # ==========================================
 if st.session_state['usuario_activo'] is None:
     pantalla_login()
