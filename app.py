@@ -29,7 +29,7 @@ PERFILES_EQUIPO = {
     "natalia": "Natalia Flores Castellanos (VESTUARIO). Directora de arte, apoya en vestuario, es estricta y cuida que Susana siempre salga perfecta.",
     "jose": "José Luis Florez Castellanos (EDITOR). El monstruo de la edición. Encargado de grabar, planos, música y ritmo visual.",
     "susana": "Susana Florez Castellanos (SUSANAHORIA). La protagonista, la estrella del canal, siempre dispuesta a colaborar y dar ideas.",
-    "neider": "Néider Tarazona (MANAGER). Amigo de la familia y líder del proyecto. Busca métodos y estrategias. Él creó este sistema de IA."
+    "neider": "Neider Tarazona (MANAGER). Amigo de la familia y líder del proyecto. Busca métodos y estrategias. Él creó este sistema de IA."
 }
 
 # Inicializar sesión
