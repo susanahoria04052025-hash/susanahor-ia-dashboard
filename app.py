@@ -181,52 +181,95 @@ def aplicacion_principal():
                 st.markdown(f"<div style='background:white; padding:15px; border-left:5px solid #FFCC00; margin-bottom:10px;'><b>De: {item['autor']}</b><br>{item['idea']}</div>", unsafe_allow_html=True)
 
     # ==========================================
-    # --- MÓDULO 4: CALENDARIO DE PRODUCCIÓN ---
+    # --- MÓDULO 4: CALENDARIO DE PRODUCCIÓN (VERSIÓN GRID PRO) ---
     # ==========================================
     elif modulo == "📅 Cronograma de Producción":
         st.subheader("📅 Cronograma Interactivo de SUSANAHORIA")
-        st.write("Programa fechas para grabar, subir videos listos, o planear ideas. Todo el equipo lo verá ordenado.")
+        st.write("Visualiza el mes completo. Asigna colores y tareas para mantener al equipo sincronizado.")
         
+        # Botón de Sincronización en tiempo real (Para que el equipo actualice la vista)
+        col_sync, col_vacio = st.columns([1, 4])
+        with col_sync:
+            if st.button("🔄 Sincronizar Calendario"):
+                st.rerun()
+
         # 1. FORMULARIO PARA AGREGAR NUEVA TAREA
-        with st.expander("➕ Añadir nuevo video o tarea al cronograma", expanded=True):
+        with st.expander("➕ Añadir nuevo video o tarea al cronograma", expanded=False):
             col1, col2, col3 = st.columns([1, 2, 1])
             with col1:
                 fecha_seleccionada = st.date_input("Fecha programada", datetime.today())
             with col2:
                 nombre_tarea = st.text_input("Nombre del Video / Tarea", placeholder="Ej: Video de Saulo de Tarso")
             with col3:
-                # Mapeo exacto de los colores que pediste
                 tipo_tarea = st.selectbox("Estado", [
                     "🟩 SUBIR VIDEO (Listo)", 
                     "🟪 GRABAR / EDITAR", 
                     "🟨 IDEA / FLEXIBLE"
                 ])
                 
-            if st.button("Agendar en el Calendario"):
+            if st.button("Agendar en el Calendario", type="primary"):
                 if nombre_tarea:
-                    # Determinar clase CSS según selección
-                    if "🟩" in tipo_tarea: color_css = "bg-verde"
-                    elif "🟪" in tipo_tarea: color_css = "bg-morado"
-                    else: color_css = "bg-amarillo"
-                    
-                    # Cargar, agregar y guardar en base de datos
                     agenda = cargar_json(ARCHIVO_CALENDARIO)
                     nueva_tarea = {
                         "fecha": fecha_seleccionada.strftime("%Y-%m-%d"),
                         "tarea": nombre_tarea,
                         "tipo": tipo_tarea,
-                        "color": color_css,
                         "responsable": nombre_perfil
                     }
                     agenda.append(nueva_tarea)
-                    # Ordenar la lista cronológicamente por fecha
-                    agenda = sorted(agenda, key=lambda x: x['fecha'])
                     guardar_json(ARCHIVO_CALENDARIO, agenda)
-                    
                     st.success("¡Agendado correctamente!")
-                    st.rerun() # Recargar para ver el cambio instantáneo
+                    st.rerun() 
                 else:
                     st.warning("Debes escribir el nombre del video.")
+
+        # 2. EL CALENDARIO VISUAL DE CUADRÍCULA (GRID)
+        st.markdown("---")
+        agenda_actual = cargar_json(ARCHIVO_CALENDARIO)
+        
+        # Transformamos nuestra base de datos al formato que lee el Calendario Visual
+        eventos_calendario = []
+        for item in agenda_actual:
+            # Asignar los colores HEX exactos según la selección
+            color_fondo = "#00C853" # Verde por defecto
+            if "🟪" in item['tipo']: color_fondo = "#AF52DE" # Morado
+            elif "🟨" in item['tipo']: color_fondo = "#FFCC00" # Amarillo
+
+            eventos_calendario.append({
+                "title": f"{item['tarea']} ({item['responsable'].split()[0]})",
+                "start": item['fecha'],
+                "backgroundColor": color_fondo,
+                "borderColor": color_fondo,
+            })
+
+        # Configuración del motor del calendario
+        opciones_calendario = {
+            "headerToolbar": {
+                "left": "prev,next today",
+                "center": "title",
+                "right": "dayGridMonth,timeGridWeek"
+            },
+            "initialView": "dayGridMonth", # Vista de mes por defecto
+            "locale": "es", # Calendario en Español
+        }
+
+        # CSS para que el texto de los eventos sea blanco y legible
+        css_calendario = """
+            .fc-event-title { font-weight: bold; color: white !important; font-size: 0.85rem; padding: 2px;}
+            .fc-event-time { display: none; } /* Ocultar la hora, solo nos importa el día */
+        """
+
+        # Importamos e imprimimos el calendario en pantalla
+        from streamlit_calendar import calendar
+        calendar(events=eventos_calendario, options=opciones_calendario, custom_css=css_calendario)
+
+# ==========================================
+# 6. LÓGICA DE BARRERA
+# ==========================================
+if st.session_state['usuario_activo'] is None:
+    pantalla_login()
+else:
+    aplicacion_principal()
 
         # 2. MOSTRAR LA LÍNEA DE TIEMPO VISUAL
         st.markdown("---")
