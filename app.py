@@ -72,7 +72,7 @@ elif modulo == "Generador de SEO":
                 try:
                     # 1. Conectando con la IA de Google usando tu clave secreta de Gemini
                     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                    modelo_ia = genai.GenerativeModel('gemini-1.5-flash-latest') 
+                    modelo_ia = genai.GenerativeModel('gemini-1.5-flash')
                     
                     # 2. El Prompt Mágico (Instrucciones precisas para la IA)
                     instruccion_cto = f"""
