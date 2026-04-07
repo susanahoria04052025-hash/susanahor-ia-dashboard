@@ -28,7 +28,7 @@ if 'usuario_activo' not in st.session_state:
     st.session_state['usuario_activo'] = None
 
 # ==========================================
-# LÓGICA DE BASES DE DATOS JSON
+# 3. LÓGICA DE BASES DE DATOS JSON
 # ==========================================
 ARCHIVO_TABLERO = "tablero_ideas.json"
 ARCHIVO_CALENDARIO = "calendario_equipo.json"
@@ -43,62 +43,89 @@ def guardar_json(archivo, datos):
     with open(archivo, "w") as f:
         json.dump(datos, f)
 
-# --- TÍTULO SAAS PERSONALIZADO ---
-    titulo_html = """
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
-        
-        /* SUSANAHOR: Tipografía original de Apple, color oscuro y elegante */
-        .susanahor-text { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            font-weight: 700; 
-            color: #1C1C1E; 
-            font-size: 2.5rem; 
-        }
-        
-        /* ia: El toque mágico verde y cursivo */
-        .ia-text { 
-            font-family: 'Pacifico', cursive; 
-            color: #00C853; 
-            font-size: 3rem; 
-            margin-left: 2px; 
-            text-transform: lowercase; 
-            font-weight: normal;
-        }
-        
-        /* Centro de mando: Más sutil para no robar protagonismo */
-        .mando-text { 
-            font-family: -apple-system, sans-serif;
-            color: #8E8E93; 
-            font-size: 1.5rem; 
-            font-weight: 500; 
-            margin-left: 15px; 
-            border-left: 2px solid #E5E5EA; 
-            padding-left: 15px; 
-        }
-    </style>
-    <div style="display: flex; align-items: baseline; margin-bottom: 10px; margin-top: -15px;">
-        <span style="font-size: 2.2rem; margin-right: 12px;">🥕</span>
-        <span class="susanahor-text">SUSANAHOR</span><span class="ia-text">ia</span>
-        <span class="mando-text">Centro de Mando</span>
-    </div>
-    """
-    st.markdown(titulo_html, unsafe_allow_html=True)
-    # ---------------------------------
+# ==========================================
+# 4. RECURSOS VISUALES Y DISEÑO (CSS & LOGOS)
+# ==========================================
+# Importamos la fuente Pacifico para el logo "ia"
+st.markdown("<style>@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');</style>", unsafe_allow_html=True)
+
+# Logo para la pantalla de Login (Centrado)
+LOGO_LOGIN = """
+<div style="display: flex; justify-content: center; align-items: baseline; margin-bottom: 10px;">
+    <span style="font-size: 3rem; margin-right: 12px;">🥕</span>
+    <span style="font-family: -apple-system, sans-serif; font-weight: 800; color: #1C1C1E; font-size: 3.2rem;">SUSANAHOR</span>
+    <span style="font-family: 'Pacifico', cursive; color: #00C853; font-size: 3.8rem; margin-left: 2px; text-transform: lowercase;">ia</span>
+</div>
+"""
+
+# Logo para el panel principal (Alineado a la izquierda)
+LOGO_PANEL = """
+<div style="display: flex; align-items: baseline; margin-bottom: 10px; margin-top: -15px;">
+    <span style="font-size: 2.2rem; margin-right: 12px;">🥕</span>
+    <span style="font-family: -apple-system, sans-serif; font-weight: 800; color: #1C1C1E; font-size: 2.5rem;">SUSANAHOR</span>
+    <span style="font-family: 'Pacifico', cursive; color: #00C853; font-size: 3rem; margin-left: 2px; text-transform: lowercase;">ia</span>
+    <span style="color: #8E8E93; font-size: 1.4rem; font-weight: 500; margin-left: 15px; border-left: 2px solid #E5E5EA; padding-left: 15px;">Centro de Mando</span>
+</div>
+"""
+
+# Diseño global súper pulido
+estilo_apple_premium = """
+<style>
+    /* Puntos de fondo ULTRA sutiles para no marear */
+    .stApp { 
+        background-color: #FAFAFC; 
+        background-image: radial-gradient(#E5E5EA 1px, transparent 1px); 
+        background-size: 25px 25px; 
+    }
+    
+    [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E5E5EA; }
+    h1, h2, h3, p, label { color: #1C1C1E !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; }
+    [data-testid="metric-container"] { background-color: #FFFFFF; border: 1px solid #E5E5EA; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+    
+    /* Botones con degradado, sombra y efecto flotante */
+    .stButton>button { 
+        background: linear-gradient(135deg, #00C853 0%, #009624 100%);
+        color: white !important; 
+        border-radius: 12px; 
+        border: none; 
+        padding: 12px 24px; 
+        font-weight: 600; 
+        box-shadow: 0 4px 10px rgba(0, 200, 83, 0.3);
+        transition: all 0.3s ease; 
+    }
+    .stButton>button:hover { 
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(0, 200, 83, 0.4);
+    }
+    
+    .caja-login { background-color: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #E5E5EA; text-align: center; backdrop-filter: blur(10px); }
+    
+    /* TARJETAS DEL CALENDARIO */
+    .cal-tarjeta { padding: 15px; border-radius: 10px; margin-bottom: 10px; color: white !important; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);}
+    .cal-tarjeta p, .cal-tarjeta h4 { color: white !important; margin: 0; }
+    .bg-verde { background-color: #00C853; border-left: 8px solid #009624;} 
+    .bg-morado { background-color: #AF52DE; border-left: 8px solid #8E24AA;} 
+    .bg-amarillo { background-color: #FFCC00; border-left: 8px solid #F57F17;} 
+</style>
+"""
+st.markdown(estilo_apple_premium, unsafe_allow_html=True)
 
 # ==========================================
-# 4. PANTALLA DE LOGIN
+# 5. PANTALLA DE LOGIN
 # ==========================================
 def pantalla_login():
-    st.markdown("<br><br><br>", unsafe_allow_html=True) 
+    st.markdown("<br><br>", unsafe_allow_html=True) 
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown("<div class='caja-login'>", unsafe_allow_html=True)
-        st.markdown("<h1 style='text-align: center; font-size: 3rem;'>🥕</h1>", unsafe_allow_html=True)
-        st.markdown("<h2 style='text-align: center;'>Acceso al Sistema</h2>", unsafe_allow_html=True)
+        # Imprimimos el Logo Hermoso
+        st.markdown(LOGO_LOGIN, unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #8E8E93 !important; margin-bottom: 25px;'>Ingresa tus credenciales del equipo</p>", unsafe_allow_html=True)
+        
         usuario_input = st.text_input("Usuario").lower()
         password_input = st.text_input("Contraseña", type="password") 
-        if st.button("🚀 Ingresar", use_container_width=True):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("🚀 Ingresar al Sistema", use_container_width=True):
             if usuario_input in USUARIOS_EQUIPO and USUARIOS_EQUIPO[usuario_input] == password_input:
                 st.session_state['usuario_activo'] = usuario_input
                 st.rerun() 
@@ -107,7 +134,7 @@ def pantalla_login():
         st.markdown("</div>", unsafe_allow_html=True)
 
 # ==========================================
-# 5. NÚCLEO DE LA APLICACIÓN
+# 6. NÚCLEO DE LA APLICACIÓN
 # ==========================================
 def aplicacion_principal():
     YOUTUBE_API_KEY = st.secrets["YOUTUBE_API_KEY"]
@@ -117,22 +144,8 @@ def aplicacion_principal():
     usuario_id = st.session_state['usuario_activo']
     nombre_perfil = PERFILES_EQUIPO[usuario_id].split(".")[0] 
 
-    # --- TÍTULO SAAS PERSONALIZADO ---
-    titulo_html = """
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
-        .susanahor-text { font-weight: 900; color: #E65100; font-size: 2.8rem; letter-spacing: -1px; font-family: -apple-system, sans-serif;}
-        .ia-text { font-family: 'Pacifico', cursive; color: #00C853; font-size: 3.5rem; margin-left: 2px; text-transform: lowercase; font-weight: normal;}
-        .mando-text { color: #1C1C1E; font-size: 1.8rem; font-weight: 600; margin-left: 15px; border-left: 3px solid #E5E5EA; padding-left: 15px;}
-    </style>
-    <div style="display: flex; align-items: baseline; margin-bottom: 5px; margin-top: -15px;">
-        <span style="font-size: 2.5rem; margin-right: 15px;">🥕</span>
-        <span class="susanahor-text">SUSANAHOR</span><span class="ia-text">ia</span>
-        <span class="mando-text">Centro de Mando</span>
-    </div>
-    """
-    st.markdown(titulo_html, unsafe_allow_html=True)
-    # ---------------------------------
+    # Imprimimos el Logo del Panel
+    st.markdown(LOGO_PANEL, unsafe_allow_html=True)
     st.write(f"Panel de Control de **{nombre_perfil}**.") 
 
     st.sidebar.markdown("### Perfil de Equipo")
@@ -203,18 +216,20 @@ def aplicacion_principal():
                     st.chat_message("assistant").markdown(respuesta)
                     st.session_state.chat_privado.append({"rol": "assistant", "texto": respuesta})
             
-            if st.button("💡 Enviar resumen al Tablero", type="primary") and len(st.session_state.chat_privado) > 0:
-                genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                resumen = genai.GenerativeModel('gemini-2.5-flash').generate_content(f"Resume esta idea de {nombre_perfil} en 1 párrafo: " + "\n".join([m['texto'] for m in st.session_state.chat_privado])).text
-                tablero = cargar_json(ARCHIVO_TABLERO)
-                tablero.insert(0, {"autor": nombre_perfil, "idea": resumen})
-                guardar_json(ARCHIVO_TABLERO, tablero)
-                st.success("¡Enviado!")
+            st.markdown("---")
+            if st.button("💡 Enviar resumen al Tablero") and len(st.session_state.chat_privado) > 0:
+                with st.spinner("Resumiendo..."):
+                    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                    resumen = genai.GenerativeModel('gemini-2.5-flash').generate_content(f"Resume esta idea de {nombre_perfil} en 1 párrafo: " + "\n".join([m['texto'] for m in st.session_state.chat_privado])).text
+                    tablero = cargar_json(ARCHIVO_TABLERO)
+                    tablero.insert(0, {"autor": nombre_perfil, "idea": resumen})
+                    guardar_json(ARCHIVO_TABLERO, tablero)
+                    st.success("¡Enviado!")
 
         with tab2:
             st.markdown("### 🗂️ Ideas Aprobadas")
             for item in cargar_json(ARCHIVO_TABLERO):
-                st.markdown(f"<div style='background:white; padding:15px; border-left:5px solid #FFCC00; margin-bottom:10px;'><b>De: {item['autor']}</b><br>{item['idea']}</div>", unsafe_allow_html=True)
+                st.markdown(f"<div style='background:white; padding:15px; border-left:5px solid #FFCC00; margin-bottom:10px; border-radius:8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);'><b>De: {item['autor']}</b><br>{item['idea']}</div>", unsafe_allow_html=True)
 
     # --- MÓDULO 4: CALENDARIO DE PRODUCCIÓN ---
     elif modulo == "📅 Cronograma de Producción":
@@ -282,7 +297,7 @@ def aplicacion_principal():
         calendar(events=eventos_calendario, options=opciones_calendario, custom_css=css_calendario)
 
 # ==========================================
-# 6. LÓGICA DE BARRERA
+# 7. LÓGICA DE BARRERA
 # ==========================================
 if st.session_state['usuario_activo'] is None:
     pantalla_login()
