@@ -1,160 +1,169 @@
 import streamlit as st
 from googleapiclient.discovery import build
-import google.generativeai as genai  # <-- LIBRERÍA DE IA DE GOOGLE
+import google.generativeai as genai
 
-# --- CONFIGURACIÓN DE LA PÁGINA ---
-st.set_page_config(page_title="SUSANAHOR IA - CTO Interno", page_icon="🥕", layout="wide")
+# ==========================================
+# 1. CONFIGURACIÓN INICIAL (Siempre va primero)
+# ==========================================
+st.set_page_config(page_title="SUSANAHOR IA - Centro de Mando", page_icon="🥕", layout="wide")
 
-# --- CONEXIÓN SEGURA CON YOUTUBE ---
-# La app va a leer la llave secreta que guardaste en Settings > Secrets
-YOUTUBE_API_KEY = st.secrets["YOUTUBE_API_KEY"]
-youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
+# ==========================================
+# 2. BASE DE DATOS DEL EQUIPO (Diccionario)
+# ==========================================
+# Aquí creas los usuarios. El sistema diferenciará quién entra.
+USUARIOS_EQUIPO = {
+    "admin": "zanahoria2026*",
+    "guionista": "guion123",
+    "editor": "video123",
+    "seo": "seo123",
+    "produccion": "rodaje123"
+}
 
-# !!! ID DEL CANAL DE SUSANAHORIA !!!
-CANAL_ID = "UCbp_1QxjyzT8cG7_0jy4NUg" 
-# --- DISEÑO UI CORPORATIVO (ESTILO APPLE / CLEAN) ---
-# Usamos CSS inyectado para crear el fondo de puntos y ajustar los colores
+# Inicializamos la "memoria" del navegador para saber si hay alguien dentro
+if 'usuario_activo' not in st.session_state:
+    st.session_state['usuario_activo'] = None
+
+# ==========================================
+# 3. DISEÑO CORPORATIVO (APPLE STYLE)
+# ==========================================
 estilo_apple = """
 <style>
-    /* Forzar fondo blanco y patrón de puntos sutil */
     .stApp {
         background-color: #FAFAFC;
         background-image: radial-gradient(#D1D1D6 1px, transparent 1px);
         background-size: 20px 20px;
     }
-    
-    /* Cambiar el color de fondo del menú lateral (Sidebar) a un blanco sólido */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
         border-right: 1px solid #E5E5EA;
     }
-
-    /* Estilo para los títulos y letras (Modo Claro) */
     h1, h2, h3, p, span, div {
-        color: #1C1C1E !important; /* Gris súper oscuro casi negro estilo Apple */
+        color: #1C1C1E !important;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
     }
-
-    /* Estilizar las cajas métricas para que parezcan tarjetas modernas */
     [data-testid="metric-container"] {
-        background-color: #FFFFFF;
-        border: 1px solid #E5E5EA;
-        padding: 15px;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        background-color: #FFFFFF; border: 1px solid #E5E5EA; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
     }
-    
-    /* Estilizar botones para que tengan tu color verde o bordes redondeados */
     .stButton>button {
-        background-color: #00C853; /* Verde Biosaludable */
-        color: white !important;
-        border-radius: 12px;
-        border: none;
-        padding: 10px 24px;
-        font-weight: 600;
-        transition: all 0.3s ease;
+        background-color: #00C853; color: white !important; border-radius: 12px; border: none; padding: 10px 24px; font-weight: 600; transition: all 0.3s ease;
     }
-    .stButton>button:hover {
-        background-color: #009624;
-        transform: scale(1.02);
+    .stButton>button:hover { background-color: #009624; transform: scale(1.02); }
+    
+    /* Diseño específico para la caja de Login flotante */
+    .caja-login {
+        background-color: rgba(255, 255, 255, 0.95);
+        padding: 40px; border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        border: 1px solid #E5E5EA; text-align: center;
+        backdrop-filter: blur(10px);
     }
 </style>
 """
-# Aplicamos el estilo
 st.markdown(estilo_apple, unsafe_allow_html=True)
-# ----------------------------------------------------
-# --- INTERFAZ VISUAL PRINCIPAL ---
-st.title("🥕 SUSANAHOR IA: Centro de Mando")
-st.write("Bienvenido al sistema de análisis predictivo y SEO de nuestro canal.")
-
-# Menú lateral izquierdo
-st.sidebar.header("Módulos del Sistema")
-modulo = st.sidebar.radio("Navegación:", ["Análisis de Vistas", "Generador de SEO", "Chat IA"])
 
 # ==========================================
-# --- MÓDULO 1: ANALÍTICAS ---
+# 4. PANTALLA DE LOGIN (La Puerta de Entrada)
 # ==========================================
-if modulo == "Análisis de Vistas":
-    st.subheader("📊 Módulo de Analíticas Reales")
-    st.write("Toca el botón para extraer los datos frescos directamente desde YouTube:")
+def pantalla_login():
+    st.markdown("<br><br><br>", unsafe_allow_html=True) # Espacio para centrar
     
-    if st.button("🚀 Extraer Datos Ahora"):
-        with st.spinner("Conectando con los servidores de YouTube..."):
-            try:
-                # Pidiendo datos a YouTube
-                respuesta = youtube.channels().list(
-                    part='snippet,statistics',
-                    id=CANAL_ID
-                ).execute()
-                
-                # Lógica de validación
-                if 'items' not in respuesta:
-                    st.warning(f"⚠️ YouTube aceptó la llave, pero dice que el ID '{CANAL_ID}' no existe o está oculto. Verifica el ID.")
-                else:
-                    # Extrayendo la información
-                    canal = respuesta['items'][0]
-                    stats = canal['statistics']
-                    
-                    # --- MAGIA VISUAL: TARJETAS DE MÉTRICAS ---
-                    st.success("¡Datos obtenidos con éxito!")
-                    st.markdown("### El Pulso del Canal Hoy")
-                    
-                    col1, col2, col3 = st.columns(3)
-                    col1.metric(label="👥 Suscriptores", value=stats['subscriberCount'])
-                    col2.metric(label="👁️ Vistas Totales", value=stats['viewCount'])
-                    col3.metric(label="🎬 Videos Subidos", value=stats['videoCount'])
-
-            except Exception as e:
-                st.error(f"Error interno del sistema: {e}")
-
-# ==========================================
-# --- MÓDULO 2: GENERADOR SEO CON IA ---
-# ==========================================
-elif modulo == "Generador de SEO":
-    st.subheader("✨ Módulo de SEO Mágico (Con tecnología Gemini AI)")
-    st.write("Escribe una idea cruda y nuestro CTO IA la convertirá en oro para el algoritmo.")
-
-    idea = st.text_area("¿De qué trata el video?", placeholder="Ej: Alquilamos un caballo para la historia de Saulo de Tarso...")
+    # Usamos columnas para que la caja de login quede al centro
+    col1, col2, col3 = st.columns([1, 1.2, 1])
     
-    if st.button("🌟 Generar Paquete SEO"):
-        if idea:
-            with st.spinner("Despertando al cerebro de Gemini... consultando el algoritmo..."):
+    with col2:
+        st.markdown("<div class='caja-login'>", unsafe_allow_html=True)
+        st.markdown("<h1 style='text-align: center; font-size: 3rem;'>🥕</h1>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center;'>Acceso al Sistema</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: #8E8E93 !important;'>Ingresa tus credenciales del equipo</p>", unsafe_allow_html=True)
+        
+        usuario_input = st.text_input("Usuario")
+        # El type='password' activa automáticamente el TouchID/FaceID del dispositivo para autocompletar
+        password_input = st.text_input("Contraseña", type="password") 
+        
+        if st.button("🚀 Ingresar al Centro de Mando", use_container_width=True):
+            # Validamos contra nuestra pequeña "Base de Datos" de arriba
+            if usuario_input in USUARIOS_EQUIPO and USUARIOS_EQUIPO[usuario_input] == password_input:
+                st.session_state['usuario_activo'] = usuario_input
+                st.rerun() # Recarga la app y le quita el seguro
+            else:
+                st.error("Credenciales incorrectas. Intenta de nuevo.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# ==========================================
+# 5. EL NÚCLEO DE LA APLICACIÓN (Si pasa la puerta)
+# ==========================================
+def aplicacion_principal():
+    YOUTUBE_API_KEY = st.secrets["YOUTUBE_API_KEY"]
+    youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
+    CANAL_ID = "UCbp_1QxjyzT8cG7_0jy4NUg" 
+
+    st.title("🥕 SUSANAHOR IA: Centro de Mando")
+    st.write(f"Bienvenido de nuevo, **{st.session_state['usuario_activo'].upper()}**.") # Saluda al usuario!
+
+    # Menú lateral
+    st.sidebar.markdown("### Perfil")
+    st.sidebar.info(f"Conectado como:\n**{st.session_state['usuario_activo']}**")
+    
+    if st.sidebar.button("🔒 Cerrar Sesión"):
+        st.session_state['usuario_activo'] = None
+        st.rerun()
+
+    st.sidebar.markdown("---")
+    st.sidebar.header("Módulos del Sistema")
+    modulo = st.sidebar.radio("Navegación:", ["Análisis de Vistas", "Generador de SEO", "Chat IA"])
+
+    # --- MÓDULO 1: ANALÍTICAS ---
+    if modulo == "Análisis de Vistas":
+        st.subheader("📊 Módulo de Analíticas Reales")
+        st.write("Toca el botón para extraer los datos frescos directamente desde YouTube:")
+        
+        if st.button("🚀 Extraer Datos Ahora"):
+            with st.spinner("Conectando con YouTube..."):
                 try:
-                    # 1. Conectando
-                    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                    
-                    # 2. Seleccionando el modelo base más seguro garantizado por Google
-                    modelo_ia = genai.GenerativeModel('gemini-2.5-flash') 
-                    
-                    # 3. El Prompt Mágico 
-                    instruccion_cto = f"""
-                    Eres el CTO y Manager de contenido del canal de YouTube 'SUSANAHORIA'. 
-                    Este es un canal familiar donde una niña de 10 años (Susana) explora la naturaleza, su granja, reflexiones de vida y valores cristianos, de forma sana y aventurera.
-                    
-                    Mi idea para el video es: {idea}
-                    
-                    Tu trabajo es generarme lo siguiente optimizado para SEO:
-                    1. TRES (3) OPCIONES DE TÍTULOS (Atractivos y aptos para familia).
-                    2. DESCRIPCIÓN OPTIMIZADA.
-                    3. LISTA DE 15 TAGS separados por comas.
-                    """
-                    
-                    # 4. Generando contenido
-                    respuesta_ia = modelo_ia.generate_content(instruccion_cto)
-                    
-                    # 5. Mostrando
-                    st.success("¡Análisis SEO completado! 🎯")
-                    st.markdown("---")
-                    st.write(respuesta_ia.text)
-                    
+                    respuesta = youtube.channels().list(part='snippet,statistics', id=CANAL_ID).execute()
+                    if 'items' in respuesta:
+                        stats = respuesta['items'][0]['statistics']
+                        st.success("¡Datos obtenidos con éxito!")
+                        col1, col2, col3 = st.columns(3)
+                        col1.metric(label="👥 Suscriptores", value=stats['subscriberCount'])
+                        col2.metric(label="👁️ Vistas Totales", value=stats['viewCount'])
+                        col3.metric(label="🎬 Videos Subidos", value=stats['videoCount'])
                 except Exception as e:
-                    st.error(f"El error persiste. Detalle exacto para diagnóstico: {e}")
-        else:
-            st.warning("¡Oye! Tienes que escribirme la idea primero. ✍️")
+                    st.error(f"Error interno del sistema: {e}")
+
+    # --- MÓDULO 2: GENERADOR SEO CON IA ---
+    elif modulo == "Generador de SEO":
+        st.subheader("✨ Módulo de SEO Mágico (Con tecnología Gemini AI)")
+        st.write("Escribe una idea cruda y nuestro CTO IA la convertirá en oro para el algoritmo.")
+        
+        idea = st.text_area("¿De qué trata el video?", placeholder="Ej: Alquilamos un caballo para la historia de Saulo...")
+        
+        if st.button("🌟 Generar Paquete SEO"):
+            if idea:
+                with st.spinner("Despertando al cerebro de Gemini..."):
+                    try:
+                        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                        modelo_ia = genai.GenerativeModel('gemini-2.5-flash') 
+                        
+                        instruccion_cto = f"""Eres el CTO y Manager de contenido del canal de YouTube 'SUSANAHORIA'. Este es un canal familiar donde una niña de 10 años (Susana) explora la naturaleza, su granja, reflexiones de vida y valores cristianos, de forma sana y aventurera. Mi idea para el video es: {idea} Tu trabajo es generarme lo siguiente optimizado para SEO: 1. TRES (3) OPCIONES DE TÍTULOS (Atractivos y aptos para familia). 2. DESCRIPCIÓN OPTIMIZADA. 3. LISTA DE 15 TAGS."""
+                        
+                        respuesta_ia = modelo_ia.generate_content(instruccion_cto)
+                        st.success("¡Análisis SEO completado! 🎯")
+                        st.write(respuesta_ia.text)
+                    except Exception as e:
+                        st.error(f"Error de IA: {e}")
+            else:
+                st.warning("Escribe la idea primero.")
+                
+    # --- MÓDULO 3 ---
+    elif modulo == "Chat IA":
+        st.subheader("🤖 Consultor CTO IA (Módulo en Construcción)")
 
 # ==========================================
-# --- MÓDULO 3: CHAT CTO INTERNO ---
+# 6. LÓGICA DEL CEREBRO BARRERA
 # ==========================================
-elif modulo == "Chat IA":
-    st.subheader("🤖 Consultor CTO IA (Próximamente Chat Dinámico)")
-    st.chat_message("assistant").write("¡Hola equipo! Soy su CTO virtual. Aún me están construyendo este módulo para poder hablar fluido con ustedes, ¡pero el SEO ya está funcionando!")
+# El código siempre lee esta parte al inicio. Si nadie se ha logeado, lanza la pantalla 4. Si están logeados, lanza la 5.
+if st.session_state['usuario_activo'] is None:
+    pantalla_login()
+else:
+    aplicacion_principal()
