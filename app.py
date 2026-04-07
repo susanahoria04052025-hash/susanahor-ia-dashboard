@@ -4,6 +4,10 @@ import google.generativeai as genai
 import json 
 import os
 from datetime import datetime
+# (Debajo de los imports que ya tienes, agrega estos:)
+from google_auth_oauthlib.flow import Flow
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 
 # ==========================================
 # 1. CONFIGURACIÓN INICIAL
@@ -158,38 +162,101 @@ def aplicacion_principal():
     st.sidebar.header("Módulos del Sistema")
     modulo = st.sidebar.radio("Navegación:", ["Análisis y Auditoría 📈", "Generador de SEO ✨", "Laboratorio de Ideas 💡", "📅 Cronograma de Producción"])
 
-    # --- MÓDULO 1: ANALÍTICA ---
-    if modulo == "Análisis y Auditoría 📈":
-        st.subheader("📊 Métricas y Auditoría del Canal")
-        if st.button("🚀 Extraer Datos y Auditar Canal"):
-            with st.spinner("Analizando canal..."):
-                try:
-                    resp_canal = youtube.channels().list(part='snippet,statistics,contentDetails', id=CANAL_ID).execute()
-                    if 'items' in resp_canal:
-                        stats = resp_canal['items'][0]['statistics']
-                        id_carpeta = resp_canal['items'][0]['contentDetails']['relatedPlaylists']['uploads']
-                        
-                        col1, col2, col3 = st.columns(3)
-                        col1.metric("👥 Suscriptores", stats['subscriberCount'])
-                        col2.metric("👁️ Vistas Totales", stats['viewCount'])
-                        col3.metric("🎬 Videos Subidos", stats['videoCount'])
+    # ==========================================
+    # --- MÓDULO 1: AUDITORÍA NIVEL DIOS (DATOS PRIVADOS) ---
+    # ==========================================
+    elif modulo == "Análisis y Auditoría 📈":
+        st.subheader("🕵️‍♂️ Auditoría Nivel Dios (Métricas Privadas)")
+        st.write("Conéctate como el dueño del canal para que la IA lea la retención y el tiempo de visualización real.")
 
-                        resp_playlist = youtube.playlistItems().list(part='snippet', playlistId=id_carpeta, maxResults=10).execute()
-                        ids_videos = [item['snippet']['resourceId']['videoId'] for item in resp_playlist['items']]
-                        titulos = [item['snippet']['title'] for item in resp_playlist['items']]
-                        
-                        resp_videos = youtube.videos().list(part='statistics', id=','.join(ids_videos)).execute()
-                        vistas = [item['statistics'].get('viewCount', '0') for item in resp_videos['items']]
-                        
-                        reporte_vistas = ""
-                        for i in range(len(titulos)): reporte_vistas += f"- '{titulos[i]}' | Vistas: {vistas[i]}\n"
-                        with st.expander("Ver datos crudos"): st.text(reporte_vistas)
+        # 1. Configurar la puerta de acceso de Google
+        SCOPES = ['https://www.googleapis.com/auth/yt-analytics.readonly', 'https://www.googleapis.com/auth/youtube.readonly']
+        
+        # Leemos el archivo JSON secreto que guardaste en la bóveda
+        info_cliente = json.loads(st.secrets["GOOGLE_OAUTH_JSON"])
+        
+        # Le decimos a Google adónde regresarnos después de logearnos
+        URL_REDIRECCION = "https://ia.susanahoria.com" 
 
+        # 2. Si acabamos de regresar de Google, atrapamos el código secreto en la URL
+        if "code" in st.query_params:
+            try:
+                flow = Flow.from_client_config(info_cliente, scopes=SCOPES, redirect_uri=URL_REDIRECCION)
+                flow.fetch_token(authorization_response=st.request.url)
+                credenciales_yt = flow.credentials
+                # Guardamos las credenciales temporalmente en esta sesión
+                st.session_state['yt_credenciales_privadas'] = credenciales_yt.to_json()
+                st.query_params.clear() # Limpiamos la URL para que quede bonita
+                st.rerun()
+            except Exception as e:
+                st.error("Hubo un error al autorizar. Intenta de nuevo.")
+
+        # 3. VERIFICAMOS SI YA TENEMOS LA LLAVE VIP AUTORIZADA
+        if 'yt_credenciales_privadas' not in st.session_state:
+            # Si NO la tenemos, mostramos el botón para Iniciar Sesión con Google
+            flow = Flow.from_client_config(info_cliente, scopes=SCOPES, redirect_uri=URL_REDIRECCION)
+            url_autorizacion, estado = flow.authorization_url(prompt='consent', access_type='offline')
+            
+            st.info("Para auditar datos privados, la IA necesita permiso del canal.")
+            st.markdown(f'<a href="{url_autorizacion}" target="_self" style="display:inline-block; padding:10px 20px; background-color:#4285F4; color:white; border-radius:5px; text-decoration:none; font-weight:bold;">🔐 Iniciar sesión con la cuenta de Susanahoria</a>', unsafe_allow_html=True)
+
+        else:
+            # SI YA LA TENEMOS, ¡Desatamos al Auditor!
+            st.success("✅ Conectado exitosamente a la base de datos privada del canal.")
+            
+            if st.button("🚀 Extraer Datos Privados y Auditar"):
+                with st.spinner("Hackeando la base de datos privada de YouTube..."):
+                    try:
+                        # Reconstruimos la credencial
+                        creds = Credentials.from_authorized_user_info(json.loads(st.session_state['yt_credenciales_privadas']), SCOPES)
+                        
+                        # Nos conectamos a YouTube Analytics API (La de verdad)
+                        youtube_analytics = build('youtubeAnalytics', 'v2', credentials=creds)
+                        
+                        # Extraemos métricas PRIVADAS de los últimos 30 días
+                        hoy = datetime.today().strftime('%Y-%m-%d')
+                        hace_30_dias = (datetime.today() - __import__('datetime').timedelta(days=30)).strftime('%Y-%m-%d')
+                        
+                        respuesta_analiticas = youtube_analytics.reports().query(
+                            ids='channel==MINE',
+                            startDate=hace_30_dias,
+                            endDate=hoy,
+                            metrics='views,estimatedMinutesWatched,averageViewDuration',
+                            dimensions='video',
+                            maxResults=10,
+                            sort='-views' # Trae los 10 más vistos
+                        ).execute()
+
+                        # Construimos el reporte
+                        reporte_privado = "MÉTRICAS PRIVADAS DE LOS ÚLTIMOS 30 DÍAS:\n"
+                        if 'rows' in respuesta_analiticas:
+                            for fila in respuesta_analiticas['rows']:
+                                id_video = fila[0]
+                                vistas = fila[1]
+                                minutos_vistos = fila[2]
+                                retencion_segundos = fila[3]
+                                reporte_privado += f"- ID Video: {id_video} | Vistas: {vistas} | Minutos totales vistos: {minutos_vistos} | Duración Promedio Vista: {retencion_segundos} segundos\n"
+                        
+                        with st.expander("Ver datos privados crudos (Solo CTO)"):
+                            st.text(reporte_privado)
+
+                        # Mandamos a Gemini a auditar esta mina de oro
                         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                        auditoria = genai.GenerativeModel('gemini-2.5-flash').generate_content(f"Audita estos 10 videos de SUSANAHORIA y da 1 consejo a José (Edición), Natalia (Arte), Maridel/Néider (Guiones) y Luis (Estrategia):\n{reporte_vistas}").text
+                        prompt_auditor = f"""
+                        Eres el CTO y Auditor experto en retención de 'SUSANAHORIA'.
+                        Acabo de extraer datos PRIVADOS reales de los últimos 30 días:
+                        {reporte_privado}
+                        
+                        Explícale al equipo (José, Natalia, Néider) qué significa la 'Duración Promedio Vista' (averageViewDuration) de estos videos. 
+                        Dales instrucciones agresivas pero motivadoras sobre cómo mejorar la RETENCIÓN en los próximos videos. Sé muy específico basándote en los números.
+                        """
+                        
+                        auditoria = genai.GenerativeModel('gemini-2.5-flash').generate_content(prompt_auditor).text
                         st.markdown(f"<div style='background:#F4F4F5; padding:20px; border-radius:10px; border-left:5px solid #FF3B30;'>{auditoria}</div>", unsafe_allow_html=True)
-                except Exception as e: st.error(f"Error: {e}")
+                        st.balloons()
 
+                    except Exception as e:
+                        st.error(f"Error al procesar datos privados: {e}")
     # --- MÓDULO 2: SEO ---
     elif modulo == "Generador de SEO ✨":
         st.subheader("✨ Módulo de SEO Mágico")
