@@ -12,7 +12,57 @@ youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 # !!! ID DEL CANAL DE SUSANAHORIA !!!
 CANAL_ID = "UCbp_1QxjyzT8cG7_0jy4NUg" 
+# --- DISEÑO UI CORPORATIVO (ESTILO APPLE / CLEAN) ---
+# Usamos CSS inyectado para crear el fondo de puntos y ajustar los colores
+estilo_apple = """
+<style>
+    /* Forzar fondo blanco y patrón de puntos sutil */
+    .stApp {
+        background-color: #FAFAFC;
+        background-image: radial-gradient(#D1D1D6 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+    
+    /* Cambiar el color de fondo del menú lateral (Sidebar) a un blanco sólido */
+    [data-testid="stSidebar"] {
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E5E5EA;
+    }
 
+    /* Estilo para los títulos y letras (Modo Claro) */
+    h1, h2, h3, p, span, div {
+        color: #1C1C1E !important; /* Gris súper oscuro casi negro estilo Apple */
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    }
+
+    /* Estilizar las cajas métricas para que parezcan tarjetas modernas */
+    [data-testid="metric-container"] {
+        background-color: #FFFFFF;
+        border: 1px solid #E5E5EA;
+        padding: 15px;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    }
+    
+    /* Estilizar botones para que tengan tu color verde o bordes redondeados */
+    .stButton>button {
+        background-color: #00C853; /* Verde Biosaludable */
+        color: white !important;
+        border-radius: 12px;
+        border: none;
+        padding: 10px 24px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    .stButton>button:hover {
+        background-color: #009624;
+        transform: scale(1.02);
+    }
+</style>
+"""
+# Aplicamos el estilo
+st.markdown(estilo_apple, unsafe_allow_html=True)
+# ----------------------------------------------------
 # --- INTERFAZ VISUAL PRINCIPAL ---
 st.title("🥕 SUSANAHOR IA: Centro de Mando")
 st.write("Bienvenido al sistema de análisis predictivo y SEO de nuestro canal.")
