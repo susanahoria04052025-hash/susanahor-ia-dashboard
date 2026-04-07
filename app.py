@@ -90,7 +90,7 @@ elif modulo == "Generador de SEO":
                     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
                     
                     # 2. Seleccionando el modelo base más seguro garantizado por Google
-                    modelo_ia = genai.GenerativeModel('gemini-1.5-flash') 
+                    modelo_ia = genai.GenerativeModel('gemini-2.5-flash') 
                     
                     # 3. El Prompt Mágico 
                     instruccion_cto = f"""
