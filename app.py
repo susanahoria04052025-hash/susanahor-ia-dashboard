@@ -90,7 +90,22 @@ def aplicacion_principal():
     usuario_id = st.session_state['usuario_activo']
     nombre_perfil = PERFILES_EQUIPO[usuario_id].split(".")[0] 
 
-    st.title("🥕 SUSANAHOR IA: Centro de Mando")
+    # --- TÍTULO SAAS PERSONALIZADO ---
+    titulo_html = """
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+        .susanahor-text { font-weight: 900; color: #E65100; font-size: 2.8rem; letter-spacing: -1px; font-family: -apple-system, sans-serif;}
+        .ia-text { font-family: 'Pacifico', cursive; color: #00C853; font-size: 3.5rem; margin-left: 2px; text-transform: lowercase; font-weight: normal;}
+        .mando-text { color: #1C1C1E; font-size: 1.8rem; font-weight: 600; margin-left: 15px; border-left: 3px solid #E5E5EA; padding-left: 15px;}
+    </style>
+    <div style="display: flex; align-items: baseline; margin-bottom: 5px; margin-top: -15px;">
+        <span style="font-size: 2.5rem; margin-right: 15px;">🥕</span>
+        <span class="susanahor-text">SUSANAHOR</span><span class="ia-text">ia</span>
+        <span class="mando-text">Centro de Mando</span>
+    </div>
+    """
+    st.markdown(titulo_html, unsafe_allow_html=True)
+    # ---------------------------------
     st.write(f"Panel de Control de **{nombre_perfil}**.") 
 
     st.sidebar.markdown("### Perfil de Equipo")
