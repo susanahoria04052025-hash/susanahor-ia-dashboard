@@ -43,21 +43,48 @@ def guardar_json(archivo, datos):
     with open(archivo, "w") as f:
         json.dump(datos, f)
 
-# ==========================================
-# 3. DISEÑO CORPORATIVO (ARREGLADO)
-# ==========================================
-estilo_apple = """
-<style>
-    .stApp { background-color: #FAFAFC; background-image: radial-gradient(#D1D1D6 1px, transparent 1px); background-size: 20px 20px; }
-    [data-testid="stSidebar"] { background-color: #FFFFFF !important; border-right: 1px solid #E5E5EA; }
-    h1, h2, h3, p, label { color: #1C1C1E !important; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; }
-    [data-testid="metric-container"] { background-color: #FFFFFF; border: 1px solid #E5E5EA; padding: 15px; border-radius: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-    .stButton>button { background-color: #00C853; color: white !important; border-radius: 12px; border: none; padding: 10px 24px; font-weight: 600; transition: all 0.3s ease; }
-    .stButton>button:hover { background-color: #009624; transform: scale(1.02); }
-    .caja-login { background-color: rgba(255, 255, 255, 0.95); padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); border: 1px solid #E5E5EA; text-align: center; backdrop-filter: blur(10px); }
-</style>
-"""
-st.markdown(estilo_apple, unsafe_allow_html=True)
+# --- TÍTULO SAAS PERSONALIZADO ---
+    titulo_html = """
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+        
+        /* SUSANAHOR: Tipografía original de Apple, color oscuro y elegante */
+        .susanahor-text { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            font-weight: 700; 
+            color: #1C1C1E; 
+            font-size: 2.5rem; 
+        }
+        
+        /* ia: El toque mágico verde y cursivo */
+        .ia-text { 
+            font-family: 'Pacifico', cursive; 
+            color: #00C853; 
+            font-size: 3rem; 
+            margin-left: 2px; 
+            text-transform: lowercase; 
+            font-weight: normal;
+        }
+        
+        /* Centro de mando: Más sutil para no robar protagonismo */
+        .mando-text { 
+            font-family: -apple-system, sans-serif;
+            color: #8E8E93; 
+            font-size: 1.5rem; 
+            font-weight: 500; 
+            margin-left: 15px; 
+            border-left: 2px solid #E5E5EA; 
+            padding-left: 15px; 
+        }
+    </style>
+    <div style="display: flex; align-items: baseline; margin-bottom: 10px; margin-top: -15px;">
+        <span style="font-size: 2.2rem; margin-right: 12px;">🥕</span>
+        <span class="susanahor-text">SUSANAHOR</span><span class="ia-text">ia</span>
+        <span class="mando-text">Centro de Mando</span>
+    </div>
+    """
+    st.markdown(titulo_html, unsafe_allow_html=True)
+    # ---------------------------------
 
 # ==========================================
 # 4. PANTALLA DE LOGIN
