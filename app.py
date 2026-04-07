@@ -125,17 +125,16 @@ def aplicacion_principal():
     # ==========================================
     # --- MÓDULO 1: AUDITORÍA NIVEL DIOS (CORREGIDO) ---
     # ==========================================
-    if modulo == "Análisis y Auditoría 📈":  # <-- ¡AQUÍ ESTABA EL ERROR, AHORA ES UN 'IF' PERFECTO!
+    if modulo == "Análisis y Auditoría 📈": 
         st.subheader("🕵️‍♂️ Auditoría Nivel Dios (Métricas Privadas)")
         st.write("Conéctate como el administrador del canal para que la IA lea la retención y el tiempo de visualización real.")
 
         SCOPES = ['https://www.googleapis.com/auth/yt-analytics.readonly']
         info_cliente = json.loads(st.secrets["GOOGLE_OAUTH_JSON"])
         
-        # IMPORTANTE: Asegúrate de entrar siempre desde https://ia.susanahoria.com para usar este botón
-        URL_REDIRECCION = "https://ia.susanahoria.com" 
+        # ⚠️ NUEVO 1: Usaremos la URL real de Streamlit para que Google no bloquee la seguridad
+        URL_REDIRECCION = "https://susanahor-ia-dashboard-bqf4sggyp3jgoifnfyduyr.streamlit.app" 
 
-        # Si regresamos con éxito de Google
         if "code" in st.query_params:
             try:
                 flow = Flow.from_client_config(info_cliente, scopes=SCOPES, redirect_uri=URL_REDIRECCION)
@@ -144,15 +143,15 @@ def aplicacion_principal():
                 st.query_params.clear() 
                 st.rerun()
             except Exception as e:
-                st.error("Hubo un error de validación con Google. Intenta de nuevo desde ia.susanahoria.com")
+                st.error(f"Hubo un error de validación con Google: {e}")
 
-        # Verificamos la llave en la sesión
         if 'yt_credenciales_privadas' not in st.session_state:
             flow = Flow.from_client_config(info_cliente, scopes=SCOPES, redirect_uri=URL_REDIRECCION)
             url_autorizacion, estado = flow.authorization_url(prompt='consent', access_type='offline')
             
             st.info("Para auditar datos privados, la IA necesita permiso de la cuenta dueña del canal.")
-            st.markdown(f'<a href="{url_autorizacion}" target="_self" style="display:inline-block; padding:12px 24px; background-color:#4285F4; color:white; border-radius:12px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(66, 133, 244, 0.3);">🔐 Iniciar sesión con Google</a>', unsafe_allow_html=True)
+            # ⚠️ NUEVO 2: Cambié target="_self" por target="_top" para romper el iframe de Hostinger y evitar bloqueos.
+            st.markdown(f'<a href="{url_autorizacion}" target="_top" style="display:inline-block; padding:12px 24px; background-color:#4285F4; color:white; border-radius:12px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(66, 133, 244, 0.3);">🔐 Iniciar sesión con Google</a>', unsafe_allow_html=True)
 
         else:
             st.success("✅ Conectado exitosamente a la bóveda privada de YouTube.")
@@ -200,7 +199,6 @@ def aplicacion_principal():
 
                     except Exception as e:
                         st.error(f"Error al procesar datos: {e}")
-
     # ==========================================
     # --- MÓDULO 2: SEO ---
     # ==========================================
