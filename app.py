@@ -169,8 +169,8 @@ def aplicacion_principal():
             
             st.info("El sistema necesita conectarse a YouTube por primera vez. Solo tendrás que hacer esto una vez.")
             # Usamos _top para romper el iframe de Hostinger y evitar bloqueos
-            st.markdown(f'<a href="{url_autorizacion}" target="_top" style="display:inline-block; padding:12px 24px; background-color:#4285F4; color:white; border-radius:12px; text-decoration:none; font-weight:bold; box-shadow: 0 4px 6px rgba(66, 133, 244, 0.3);">🔐 Conectar con Google</a>', unsafe_allow_html=True)
-
+            # LA SOLUCIÓN: Botón nativo de Streamlit (Inmune a bloqueos)
+            st.link_button("🔐 Conectar con Google (Pestaña Nueva)", url_autorizacion, type="primary")
         else:
             # SI YA TENEMOS LA LLAVE, MOSTRAMOS EL BOTÓN ROJO
             st.success("✅ Bóveda privada de YouTube conectada y lista.")
