@@ -230,10 +230,15 @@ def aplicacion_principal():
                             maxResults=10, sort='-views' 
                         ).execute()
 
-                        reporte_privado = "MÉTRICAS PRIVADAS:\n"
+                       # Creamos un diccionario para traducir IDs a Títulos reales
+                        mapa_titulos = dict(zip(ids_videos, titulos))
+
+                        reporte_privado = "MÉTRICAS PRIVADAS DE RETENCIÓN (Últimos 30 días):\n"
                         if 'rows' in respuesta_analiticas:
-                            for fila in respuesta_analiticas['rows']: reporte_privado += f"- ID: {fila[0]} | Vistas: {fila[1]} | Retención: {fila[3]} seg\n"
-                        
+                            for fila in respuesta_analiticas['rows']:
+                                id_vid = fila[0]
+                                titulo_real = mapa_titulos.get(id_vid, "Video Antiguo/Desconocido")
+                                reporte_privado += f"- Video: '{titulo_real}' | Vistas: {fila[1]} | Retención: {fila[3]} segundos\n"
                         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
                         prompt = f"Eres CTO de SUSANAHORIA. Analiza estos datos privados de retención (averageViewDuration en seg): {reporte_privado}. Da instrucciones agresivas a José (Edición) y Natalia (Arte) para mejorar la retención en los primeros 15 segundos."
                         auditoria = genai.GenerativeModel('gemini-2.5-flash').generate_content(prompt).text
