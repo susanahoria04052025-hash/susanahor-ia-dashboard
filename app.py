@@ -60,7 +60,7 @@ tema_app_movil = """
     [data-testid="collapsedControl"] {display: none;} /* Ocultar flecha del sidebar */
     
     /* Tipografía global limpia */
-    html, body, p, div, h1, h2, h3, h4, h5, h6, span, label {
+   html, body, p, h1, h2, h3, h4, h5, h6, label {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
         color: #1C1C1E;
     }
