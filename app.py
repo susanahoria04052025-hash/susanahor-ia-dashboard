@@ -194,7 +194,7 @@ def aplicacion_principal():
             st.link_button("🔐 Conectar con Google", url_autorizacion, type="primary")
         else:
             if st.button("🚀 Extraer y Auditar"):
-                with st.spinner("Hackeando YouTube..."):
+                with st.spinner("Analizando YouTube..."):
                     try:
                         # 1. Conexión a APIs
                         creds = Credentials.from_authorized_user_info(token_guardado, SCOPES)
