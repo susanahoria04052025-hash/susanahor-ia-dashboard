@@ -6,7 +6,7 @@ import os
 from datetime import datetime, timedelta
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
-from streamlit_option_menu import option_menu # NUEVA LIBRERÍA DE MENÚ MÓVIL
+from streamlit_option_menu import option_menu
 
 # ==========================================
 # 1. CONFIGURACIÓN INICIAL
@@ -50,60 +50,40 @@ st.markdown("<style>@import url('https://fonts.googleapis.com/css2?family=Pacifi
 
 tema_app_movil = """
 <style>
-    /* Fondo de la App (Gris muy claro/crema) */
     .stApp { background-color: #F4F7F6; }
-    
-    /* Ocultar elementos por defecto de Streamlit */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-    [data-testid="collapsedControl"] {display: none;} /* Ocultar flecha del sidebar */
+    [data-testid="collapsedControl"] {display: none;} 
     
-    /* Tipografía global limpia */
-   html, body, p, h1, h2, h3, h4, h5, h6, label {
+    html, body, p, h1, h2, h3, h4, h5, h6, label {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
         color: #1C1C1E;
     }
 
-    /* ESTILO DE TARJETAS (CARDS) */
     .card-susanahoria {
-        background-color: #FFFFFF;
-        border-radius: 24px;
-        padding: 24px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.04);
-        margin-bottom: 20px;
-        border: 1px solid #F0F0F0;
+        background-color: #FFFFFF; border-radius: 24px; padding: 24px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.04); margin-bottom: 20px; border: 1px solid #F0F0F0;
     }
 
-    /* LOGO SUSANAHORIA */
     .logo-container { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
     .logo-icon { font-size: 2.5rem; margin-right: 8px; }
     .logo-text-1 { font-weight: 900; color: #1C1C1E; font-size: 2.2rem; letter-spacing: -0.5px; }
     .logo-text-2 { font-family: 'Pacifico', cursive !important; color: #00C853 !important; font-size: 2.6rem; margin-left: 2px; text-transform: lowercase; font-weight: normal;}
 
-    /* BOTONES PREMIUM (Naranja Zanahoria) */
     .stButton>button { 
         background: linear-gradient(135deg, #FF8A65 0%, #FF5722 100%);
-        color: white !important; 
-        border-radius: 16px; 
-        border: none; 
-        padding: 12px 24px; 
-        font-weight: bold; 
-        font-size: 1.1rem;
-        box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
-        transition: all 0.3s ease; 
-        width: 100%;
+        color: white !important; border-radius: 16px; border: none; padding: 12px 24px; 
+        font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+        transition: all 0.3s ease; width: 100%;
     }
     .stButton>button:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255, 87, 34, 0.4); }
     
-    /* Botón secundario (Google/Cerrar sesión) */
     .btn-secundario>button { background: #F4F7F6 !important; color: #1C1C1E !important; box-shadow: none !important; border: 1px solid #E5E5EA !important; }
     
-    /* Inputs de texto */
     .stTextInput>div>div>input, .stTextArea>div>div>textarea { border-radius: 12px; border: 1px solid #E5E5EA; padding: 12px; background-color: #FAFAFC;}
     .stTextInput>div>div>input:focus, .stTextArea>div>div>textarea:focus { border-color: #00C853; box-shadow: 0 0 0 1px #00C853;}
 
-    /* Calendario Mobile */
     .fc-toolbar-title { font-size: 1.2rem !important; color: #1C1C1E !important; }
     .fc-button-primary { background-color: #00C853 !important; border: none !important; border-radius: 8px !important; }
     .fc-event { border-radius: 6px !important; border: none !important; padding: 2px 4px !important; }
@@ -114,7 +94,7 @@ tema_app_movil = """
 st.markdown(tema_app_movil, unsafe_allow_html=True)
 
 # ==========================================
-# 4. PANTALLA DE LOGIN (ESTILO APP)
+# 4. PANTALLA DE LOGIN
 # ==========================================
 def pantalla_login():
     st.markdown("<br><br>", unsafe_allow_html=True) 
@@ -141,13 +121,12 @@ def pantalla_login():
                 st.error("Credenciales incorrectas.")
 
 # ==========================================
-# 5. NÚCLEO DE LA APP (INTERFAZ PRINCIPAL)
+# 5. NÚCLEO DE LA APP
 # ==========================================
 def aplicacion_principal():
     usuario_id = st.session_state['usuario_activo']
     nombre_perfil = PERFILES_EQUIPO[usuario_id]
 
-    # --- HEADER CARD (Logo y Perfil) ---
     st.markdown(f"""
         <div class='card-susanahoria' style='padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;'>
             <div style='display: flex; align-items: center;'>
@@ -161,7 +140,6 @@ def aplicacion_principal():
         </div>
     """, unsafe_allow_html=True)
 
-    # Botón de cerrar sesión discreto
     col_vacio, col_salir = st.columns([3, 1])
     with col_salir:
         st.markdown("<div class='btn-secundario'>", unsafe_allow_html=True)
@@ -170,7 +148,6 @@ def aplicacion_principal():
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- MENÚ DE NAVEGACIÓN MÓVIL (TABS) ---
     modulo = option_menu(
         menu_title=None, 
         options=["Auditoría", "SEO", "Ideas", "Agenda"], 
@@ -219,28 +196,38 @@ def aplicacion_principal():
             if st.button("🚀 Extraer y Auditar"):
                 with st.spinner("Hackeando YouTube..."):
                     try:
+                        # 1. Conexión a APIs
                         creds = Credentials.from_authorized_user_info(token_guardado, SCOPES)
                         youtube_analytics = build('youtubeAnalytics', 'v2', credentials=creds)
+                        youtube_data = build('youtube', 'v3', developerKey=st.secrets["YOUTUBE_API_KEY"])
+                        
                         hoy = datetime.today().strftime('%Y-%m-%d')
                         hace_30_dias = (datetime.today() - timedelta(days=30)).strftime('%Y-%m-%d')
                         
+                        # 2. Extraer IDs y Retención (Analytics)
                         respuesta_analiticas = youtube_analytics.reports().query(
                             ids='channel==MINE', startDate=hace_30_dias, endDate=hoy,
                             metrics='views,estimatedMinutesWatched,averageViewDuration', dimensions='video',
                             maxResults=10, sort='-views' 
                         ).execute()
 
-                       # Creamos un diccionario para traducir IDs a Títulos reales
-                        mapa_titulos = dict(zip(ids_videos, titulos))
-
                         reporte_privado = "MÉTRICAS PRIVADAS DE RETENCIÓN (Últimos 30 días):\n"
+                        
                         if 'rows' in respuesta_analiticas:
+                            # 3. Extraer los Títulos Reales (Data API)
+                            ids_top_videos = [fila[0] for fila in respuesta_analiticas['rows']]
+                            resp_titulos = youtube_data.videos().list(part='snippet', id=','.join(ids_top_videos)).execute()
+                            mapa_titulos = {item['id']: item['snippet']['title'] for item in resp_titulos.get('items', [])}
+
+                            # 4. Armar el reporte con Nombres Reales
                             for fila in respuesta_analiticas['rows']:
                                 id_vid = fila[0]
-                                titulo_real = mapa_titulos.get(id_vid, "Video Antiguo/Desconocido")
-                                reporte_privado += f"- Video: '{titulo_real}' | Vistas: {fila[1]} | Retención: {fila[3]} segundos\n"
+                                titulo_real = mapa_titulos.get(id_vid, "Video Desconocido")
+                                reporte_privado += f"- Video: '{titulo_real}' | Vistas: {fila[1]} | Retención: {fila[3]} seg\n"
+                        
+                        # 5. Enviar a Gemini
                         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-                        prompt = f"Eres CTO de SUSANAHORIA. Analiza estos datos privados de retención (averageViewDuration en seg): {reporte_privado}. Da instrucciones agresivas a José (Edición) y Natalia (Arte) para mejorar la retención en los primeros 15 segundos."
+                        prompt = f"Eres CTO de SUSANAHORIA. Analiza estos datos privados de retención (averageViewDuration en seg): {reporte_privado}. Da instrucciones agresivas a José (Edición) y Natalia (Arte) para mejorar la retención en los primeros 15 segundos. Menciona los nombres de los videos."
                         auditoria = genai.GenerativeModel('gemini-2.5-flash').generate_content(prompt).text
                         
                         st.markdown(f"<div style='background:#F4F7F6; padding:20px; border-radius:16px; border-left:6px solid #FF8A65; margin-top:20px;'>{auditoria}</div>", unsafe_allow_html=True)
@@ -325,7 +312,7 @@ def aplicacion_principal():
 
         opciones_calendario = {
             "headerToolbar": {"left": "prev,next", "center": "title", "right": "dayGridMonth,listMonth"},
-            "initialView": "listMonth", # Vista de lista por defecto para móviles (más elegante)
+            "initialView": "listMonth", 
             "locale": "es",
             "height": "auto"
         }
