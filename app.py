@@ -176,7 +176,7 @@ def aplicacion_principal():
             st.success("✅ Bóveda privada de YouTube conectada y lista.")
             
             if st.button("🚀 Extraer Retención y Auditar", type="primary"):
-                with st.spinner("Hackeando la base de datos privada de YouTube..."):
+                with st.spinner("Analizando la base de datos privada de YouTube..."):
                     try:
                         creds = Credentials.from_authorized_user_info(token_guardado, SCOPES)
                         youtube_analytics = build('youtubeAnalytics', 'v2', credentials=creds)
