@@ -189,7 +189,7 @@ def aplicacion_principal():
     # ==========================================
     if modulo == "Auditoría":
         st.markdown("<div class='card-susanahoria'>", unsafe_allow_html=True)
-        st.markdown("### 🕵️‍♂️ Auditoría Nivel Dios")
+        st.markdown("### 🕵️‍♂️ Auditoría Real del Canal")
         st.write("Analiza la retención real de los últimos 30 días.")
 
         SCOPES = ['https://www.googleapis.com/auth/yt-analytics.readonly']
