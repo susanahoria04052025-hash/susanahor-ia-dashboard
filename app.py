@@ -135,15 +135,19 @@ def aplicacion_principal():
         # ⚠️ NUEVO 1: Usaremos la URL real de Streamlit para que Google no bloquee la seguridad
         URL_REDIRECCION = "https://susanahor-ia-dashboard-bqf4sggyp3jgoifnfyduyr.streamlit.app" 
 
+      # Si regresamos con éxito de Google, atrapamos el código de la URL
         if "code" in st.query_params:
             try:
                 flow = Flow.from_client_config(info_cliente, scopes=SCOPES, redirect_uri=URL_REDIRECCION)
-                flow.fetch_token(authorization_response=st.request.url)
+                # Extraemos solo el código secreto directamente (LA CORRECCIÓN MÁGICA)
+                codigo_secreto = st.query_params["code"]
+                flow.fetch_token(code=codigo_secreto)
+                
                 st.session_state['yt_credenciales_privadas'] = flow.credentials.to_json()
                 st.query_params.clear() 
                 st.rerun()
             except Exception as e:
-                st.error(f"Hubo un error de validación con Google: {e}")
+                st.error(f"Hubo un error al atrapar la llave de Google: {e}")
 
         if 'yt_credenciales_privadas' not in st.session_state:
             flow = Flow.from_client_config(info_cliente, scopes=SCOPES, redirect_uri=URL_REDIRECCION)
