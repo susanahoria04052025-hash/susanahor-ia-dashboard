@@ -3,6 +3,7 @@ from googleapiclient.discovery import build
 import google.generativeai as genai
 import json 
 import os
+import re # NUEVO: Para extraer el ID del video de un link
 from datetime import datetime, timedelta
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
@@ -13,9 +14,6 @@ from streamlit_option_menu import option_menu
 # ==========================================
 st.set_page_config(page_title="SUSANAHOR IA", page_icon="🥕", layout="centered", initial_sidebar_state="collapsed")
 
-# ==========================================
-# 2. BASE DE DATOS Y PERFILES
-# ==========================================
 USUARIOS_EQUIPO = {
     "luis": "papa123", "maridel": "mama123", "natalia": "nata123",
     "jose": "jose123", "susana": "susi123", "neider": "manager123"
@@ -43,47 +41,34 @@ def cargar_json(archivo):
 def guardar_json(archivo, datos):
     with open(archivo, "w") as f: json.dump(datos, f)
 
+# Función para extraer ID de YouTube
+def extraer_id_yt(url):
+    patron = r'(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})'
+    match = re.search(patron, url)
+    return match.group(1) if match else url # Devuelve el ID o lo mismo si ya era un ID
+
 # ==========================================
-# 3. DISEÑO UI/UX MOBILE-FIRST (APP NATIVA)
+# 3. DISEÑO UI/UX MOBILE-FIRST
 # ==========================================
 st.markdown("<style>@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');</style>", unsafe_allow_html=True)
 
 tema_app_movil = """
 <style>
     .stApp { background-color: #F4F7F6; }
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
     [data-testid="collapsedControl"] {display: none;} 
-    
-    html, body, p, h1, h2, h3, h4, h5, h6, label {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-        color: #1C1C1E;
-    }
-
-    .card-susanahoria {
-        background-color: #FFFFFF; border-radius: 24px; padding: 24px;
-        box-shadow: 0 8px 24px rgba(0,0,0,0.04); margin-bottom: 20px; border: 1px solid #F0F0F0;
-    }
-
+    html, body, p, h1, h2, h3, h4, h5, h6, label { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important; color: #1C1C1E; }
+    .card-susanahoria { background-color: #FFFFFF; border-radius: 24px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.04); margin-bottom: 20px; border: 1px solid #F0F0F0; }
     .logo-container { display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
     .logo-icon { font-size: 2.5rem; margin-right: 8px; }
     .logo-text-1 { font-weight: 900; color: #1C1C1E; font-size: 2.2rem; letter-spacing: -0.5px; }
     .logo-text-2 { font-family: 'Pacifico', cursive !important; color: #00C853 !important; font-size: 2.6rem; margin-left: 2px; text-transform: lowercase; font-weight: normal;}
-
-    .stButton>button { 
-        background: linear-gradient(135deg, #FF8A65 0%, #FF5722 100%);
-        color: white !important; border-radius: 16px; border: none; padding: 12px 24px; 
-        font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
-        transition: all 0.3s ease; width: 100%;
-    }
+    .stButton>button { background: linear-gradient(135deg, #FF8A65 0%, #FF5722 100%); color: white !important; border-radius: 16px; border: none; padding: 12px 24px; font-weight: bold; font-size: 1.1rem; box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3); transition: all 0.3s ease; width: 100%; }
     .stButton>button:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(255, 87, 34, 0.4); }
-    
     .btn-secundario>button { background: #F4F7F6 !important; color: #1C1C1E !important; box-shadow: none !important; border: 1px solid #E5E5EA !important; }
-    
+    .btn-emergencia>button { background: linear-gradient(135deg, #FF3B30 0%, #C62828 100%) !important; box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3) !important; }
     .stTextInput>div>div>input, .stTextArea>div>div>textarea { border-radius: 12px; border: 1px solid #E5E5EA; padding: 12px; background-color: #FAFAFC;}
     .stTextInput>div>div>input:focus, .stTextArea>div>div>textarea:focus { border-color: #00C853; box-shadow: 0 0 0 1px #00C853;}
-
     .fc-toolbar-title { font-size: 1.2rem !important; color: #1C1C1E !important; }
     .fc-button-primary { background-color: #00C853 !important; border: none !important; border-radius: 8px !important; }
     .fc-event { border-radius: 6px !important; border: none !important; padding: 2px 4px !important; }
@@ -100,14 +85,10 @@ def pantalla_login():
     st.markdown("<br><br>", unsafe_allow_html=True) 
     st.markdown("""
         <div class='card-susanahoria' style='max-width: 400px; margin: 0 auto;'>
-            <div class='logo-container'>
-                <span class='logo-icon'>🥕</span>
-                <span class='logo-text-1'>SUSANAHOR</span><span class='logo-text-2'>ia</span>
-            </div>
+            <div class='logo-container'><span class='logo-icon'>🥕</span><span class='logo-text-1'>SUSANAHOR</span><span class='logo-text-2'>ia</span></div>
             <p style='text-align: center; color: #8E8E93; margin-bottom: 30px; font-size: 0.9rem;'>Ingresa tus credenciales para continuar</p>
         </div>
     """, unsafe_allow_html=True)
-    
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         usuario_input = st.text_input("Usuario", placeholder="Ej: neider")
@@ -117,8 +98,7 @@ def pantalla_login():
             if usuario_input.lower() in USUARIOS_EQUIPO and USUARIOS_EQUIPO[usuario_input.lower()] == password_input:
                 st.session_state['usuario_activo'] = usuario_input.lower()
                 st.rerun() 
-            else:
-                st.error("Credenciales incorrectas.")
+            else: st.error("Credenciales incorrectas.")
 
 # ==========================================
 # 5. NÚCLEO DE LA APP
@@ -129,14 +109,8 @@ def aplicacion_principal():
 
     st.markdown(f"""
         <div class='card-susanahoria' style='padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;'>
-            <div style='display: flex; align-items: center;'>
-                <span style='font-size: 1.8rem; margin-right: 5px;'>🥕</span>
-                <span style='font-weight: 900; color: #1C1C1E; font-size: 1.4rem; letter-spacing: -0.5px;'>SUSANAHOR</span><span style="font-family: 'Pacifico', cursive; color: #00C853; font-size: 1.6rem; margin-left: 1px;">ia</span>
-            </div>
-            <div style='text-align: right;'>
-                <span style='font-size: 0.8rem; color: #8E8E93; display: block;'>Hola,</span>
-                <span style='font-weight: bold; color: #1C1C1E; font-size: 0.9rem;'>{nombre_perfil.split()[0]} 👋</span>
-            </div>
+            <div style='display: flex; align-items: center;'><span style='font-size: 1.8rem; margin-right: 5px;'>🥕</span><span style='font-weight: 900; color: #1C1C1E; font-size: 1.4rem; letter-spacing: -0.5px;'>SUSANAHOR</span><span style="font-family: 'Pacifico', cursive; color: #00C853; font-size: 1.6rem; margin-left: 1px;">ia</span></div>
+            <div style='text-align: right;'><span style='font-size: 0.8rem; color: #8E8E93; display: block;'>Hola,</span><span style='font-weight: bold; color: #1C1C1E; font-size: 0.9rem;'>{nombre_perfil.split()[0]} 👋</span></div>
         </div>
     """, unsafe_allow_html=True)
 
@@ -148,21 +122,22 @@ def aplicacion_principal():
             st.rerun()
         st.markdown("</div>", unsafe_allow_html=True)
 
+    # NUEVO MENÚ CON SALA DE EMERGENCIAS
     modulo = option_menu(
         menu_title=None, 
-        options=["Auditoría", "SEO", "Ideas", "Agenda"], 
-        icons=["graph-up-arrow", "magic", "lightbulb", "calendar2-week"], 
+        options=["Auditoría", "Emergencia", "SEO", "Ideas", "Agenda"], 
+        icons=["graph-up-arrow", "ambulance", "magic", "lightbulb", "calendar2-week"], 
         menu_icon="cast", default_index=0, orientation="horizontal",
         styles={
             "container": {"padding": "0!important", "background-color": "transparent", "margin-bottom": "20px"},
-            "icon": {"color": "#8E8E93", "font-size": "18px"}, 
-            "nav-link": {"font-size": "12px", "text-align": "center", "margin":"0px", "--hover-color": "#E5E5EA", "color": "#1C1C1E", "font-weight": "600"},
+            "icon": {"color": "#8E8E93", "font-size": "14px"}, 
+            "nav-link": {"font-size": "11px", "text-align": "center", "margin":"0px", "--hover-color": "#E5E5EA", "color": "#1C1C1E", "font-weight": "600", "padding":"5px"},
             "nav-link-selected": {"background-color": "#00C853", "color": "white", "icon-color": "white"},
         }
     )
 
     # ==========================================
-    # --- MÓDULO 1: AUDITORÍA ---
+    # --- MÓDULO 1: AUDITORÍA GENERAL ---
     # ==========================================
     if modulo == "Auditoría":
         st.markdown("<div class='card-susanahoria'>", unsafe_allow_html=True)
@@ -194,9 +169,8 @@ def aplicacion_principal():
             st.link_button("🔐 Conectar con Google", url_autorizacion, type="primary")
         else:
             if st.button("🚀 Extraer y Auditar"):
-                with st.spinner("Analizando YouTube..."):
+                with st.spinner("Hackeando YouTube..."):
                     try:
-                        # 1. Conexión a APIs
                         creds = Credentials.from_authorized_user_info(token_guardado, SCOPES)
                         youtube_analytics = build('youtubeAnalytics', 'v2', credentials=creds)
                         youtube_data = build('youtube', 'v3', developerKey=st.secrets["YOUTUBE_API_KEY"])
@@ -204,28 +178,23 @@ def aplicacion_principal():
                         hoy = datetime.today().strftime('%Y-%m-%d')
                         hace_30_dias = (datetime.today() - timedelta(days=30)).strftime('%Y-%m-%d')
                         
-                        # 2. Extraer IDs y Retención (Analytics)
                         respuesta_analiticas = youtube_analytics.reports().query(
                             ids='channel==MINE', startDate=hace_30_dias, endDate=hoy,
                             metrics='views,estimatedMinutesWatched,averageViewDuration', dimensions='video',
                             maxResults=10, sort='-views' 
                         ).execute()
 
-                        reporte_privado = "MÉTRICAS PRIVADAS DE RETENCIÓN (Últimos 30 días):\n"
-                        
+                        reporte_privado = "MÉTRICAS PRIVADAS DE RETENCIÓN:\n"
                         if 'rows' in respuesta_analiticas:
-                            # 3. Extraer los Títulos Reales (Data API)
                             ids_top_videos = [fila[0] for fila in respuesta_analiticas['rows']]
                             resp_titulos = youtube_data.videos().list(part='snippet', id=','.join(ids_top_videos)).execute()
                             mapa_titulos = {item['id']: item['snippet']['title'] for item in resp_titulos.get('items', [])}
 
-                            # 4. Armar el reporte con Nombres Reales
                             for fila in respuesta_analiticas['rows']:
                                 id_vid = fila[0]
                                 titulo_real = mapa_titulos.get(id_vid, "Video Desconocido")
                                 reporte_privado += f"- Video: '{titulo_real}' | Vistas: {fila[1]} | Retención: {fila[3]} seg\n"
                         
-                        # 5. Enviar a Gemini
                         genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
                         prompt = f"Eres CTO de SUSANAHORIA. Analiza estos datos privados de retención (averageViewDuration en seg): {reporte_privado}. Da instrucciones agresivas a José (Edición) y Natalia (Arte) para mejorar la retención en los primeros 15 segundos. Menciona los nombres de los videos."
                         auditoria = genai.GenerativeModel('gemini-2.5-flash').generate_content(prompt).text
@@ -235,6 +204,55 @@ def aplicacion_principal():
                     except Exception as e:
                         st.error(f"Error: {e}")
                         if st.button("🔄 Reiniciar Conexión"): os.remove(ARCHIVO_TOKEN_YT); st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    # ==========================================
+    # --- MÓDULO NUEVO: SALA DE EMERGENCIAS ---
+    # ==========================================
+    elif modulo == "Emergencia":
+        st.markdown("<div class='card-susanahoria'>", unsafe_allow_html=True)
+        st.markdown("### 🚑 Sala de Emergencias (Video Específico)")
+        st.write("¿Un video acaba de salir y tiene pocas vistas? Pega el link aquí. La IA analizará el empaque y te dará un Plan de Rescate inmediato.")
+        
+        link_video = st.text_input("Pega el Link o ID del video de YouTube:")
+        
+        st.markdown("<div class='btn-emergencia'>", unsafe_allow_html=True)
+        if st.button("🚨 Analizar Video y Rescatar") and link_video:
+            with st.spinner("Analizando signos vitales del video..."):
+                try:
+                    id_vid = extraer_id_yt(link_video)
+                    youtube_data = build('youtube', 'v3', developerKey=st.secrets["YOUTUBE_API_KEY"])
+                    
+                    # Extraer datos públicos del video
+                    resp_video = youtube_data.videos().list(part='snippet,statistics', id=id_vid).execute()
+                    
+                    if not resp_video['items']:
+                        st.error("No se encontró el video. Verifica el link.")
+                    else:
+                        datos = resp_video['items'][0]
+                        titulo = datos['snippet']['title']
+                        desc = datos['snippet']['description']
+                        tags = datos['snippet'].get('tags', [])
+                        vistas = datos['statistics'].get('viewCount', 0)
+                        
+                        st.info(f"**Video detectado:** {titulo} | **Vistas actuales:** {vistas}")
+                        
+                        # Enviar a Gemini para diagnóstico de emergencia
+                        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+                        prompt_rescate = f"""
+                        Eres el CTO de SUSANAHORIA. Acabamos de lanzar este video y está fracasando (solo tiene {vistas} vistas).
+                        TÍTULO ACTUAL: {titulo}
+                        ETIQUETAS ACTUALES: {tags}
+                        
+                        DIAGNÓSTICO DE EMERGENCIA:
+                        1. Dime por qué crees que este título no está generando clics (CTR bajo). Sé duro y directo.
+                        2. Dame 3 opciones de TÍTULOS DE EMERGENCIA para cambiarlo AHORA MISMO. Deben ser mucho más clickbait (pero aptos para familia), generar urgencia o curiosidad extrema.
+                        3. Dale un consejo a Natalia sobre cómo debería cambiar la miniatura en los próximos 10 minutos para salvar el video.
+                        """
+                        rescate = genai.GenerativeModel('gemini-2.5-flash').generate_content(prompt_rescate).text
+                        st.markdown(f"<div style='background:#FFF0F0; padding:20px; border-radius:16px; border-left:6px solid #FF3B30; margin-top:20px;'>{rescate}</div>", unsafe_allow_html=True)
+                except Exception as e:
+                    st.error(f"Error en la sala de emergencias: {e}")
         st.markdown("</div>", unsafe_allow_html=True)
 
     # ==========================================
