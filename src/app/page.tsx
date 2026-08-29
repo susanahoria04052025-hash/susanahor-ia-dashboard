@@ -45,7 +45,7 @@ export default function LandingPage() {
             Diseño de Marca que <span className="text-[#FF5A1F] italic underline decoration-wavy decoration-pink-300">Brilla</span> y Divierte
           </h1>
           <p className="text-lg text-[#5E4F4F] max-w-xl mx-auto lg:mx-0 leading-relaxed">
-            ¡Hola! Soy Susana. Me encanta crear contenido alegre, divertido y saludable para niños y familias. Diseño experiencias visuales llenas de color, chispa y, por supuesto, ¡muchas zanahorias!
+            ¡Hola! Soy Susana. Me encanta crear contenido alegre, divertido y saludable para niños y familias. Diseño experiencias visuales llenas de color, chispa y, por supuesto, ¡muchas de mis zanahorias felices!
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
             <a
@@ -65,7 +65,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Tarjeta del Perfil de Susanahoria (Estilo Maquetado Solar Pop) */}
+        {/* Tarjeta del Perfil de Susanahoria */}
         <div className="lg:col-span-5 relative flex justify-center">
           <div className="relative w-full max-w-sm aspect-square bg-gradient-to-tr from-pink-400 to-orange-400 rounded-[3rem] p-4 shadow-2xl rotate-2 hover:rotate-0 transition duration-300">
             <div className="w-full h-full bg-white rounded-[2.5rem] overflow-hidden flex flex-col items-center justify-center p-6 border-4 border-orange-100">
@@ -84,73 +84,93 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SECCIÓN DE CONTENIDO SELECCIONADO */}
+      {/* SECCIÓN DE CONTENIDO REAL SELECCIONADO */}
       <section id="works" className="bg-[#FFFDF9] py-16 border-t border-orange-100/40">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center max-w-xl mx-auto space-y-3 mb-12">
             <h2 className="text-3xl font-black text-[#2F1F1F]">Mi Contenido Seleccionado</h2>
             <p className="text-sm text-[#5E4F4F]">
-              Un vistazo rápido a las ideas que cocinamos, grabamos y compartimos con el mundo entero en YouTube.
+              Haz clic en cualquiera de nuestras listas oficiales de reproducción para explorar nuestros videos directamente en YouTube.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
-            {/* Card 1 */}
-            <div className="bg-[#FFFDF9] border border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition group">
+            {/* Tarjeta 1: Diversión y Aventura */}
+            <a
+              href="https://www.youtube.com/watch?v=zYiSQTK-Ef8&list=PLIf6THHNSwHeIPrzJWbkf_Nwi3TcluCOC"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#FFFDF9] border border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition group block hover:scale-[1.01]"
+            >
               <div className="aspect-video w-full bg-orange-100 rounded-2xl overflow-hidden mb-4 relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-[#FF5A1F]/80 to-transparent flex items-end p-3">
-                  <span className="text-white text-xs font-bold uppercase">Cocina Divertida</span>
+                  <span className="text-white text-xs font-bold uppercase tracking-wider">Aventuras</span>
                 </div>
-                <img src="/assets/icon.jpg" className="w-full h-full object-cover group-hover:scale-105 transition" alt="Recetas" />
+                <img src="/assets/icon.jpg" className="w-full h-full object-cover group-hover:scale-105 transition" alt="Aventuras" />
               </div>
-              <h3 className="font-black text-[#2F1F1F] text-md">Recetas de Zanahorias</h3>
+              <h3 className="font-black text-[#2F1F1F] text-md group-hover:text-[#FF5A1F] transition">Diversión y Aventura</h3>
               <p className="text-xs text-[#5E4F4F] mt-1 leading-relaxed">
-                Postres, snacks crujientes y batidos llenos de vitaminas explicados de forma súper fácil para niños.
+                Juegos divertidos, momentos en familia y retos interesantes explorando y aprendiendo juntos de manera sana.
               </p>
-            </div>
+            </a>
 
-            {/* Card 2 */}
-            <div className="bg-[#FFFDF9] border border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition group">
+            {/* Tarjeta 2: Cuidemos la Creación */}
+            <a
+              href="https://www.youtube.com/watch?v=HnOvSLVLTOQ&list=PLIf6THHNSwHeoIrchVLTadA0bywMpPZCK"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#FFFDF9] border border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition group block hover:scale-[1.01]"
+            >
               <div className="aspect-video w-full bg-pink-100 rounded-2xl overflow-hidden mb-4 relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-pink-500/80 to-transparent flex items-end p-3">
-                  <span className="text-white text-xs font-bold uppercase">Manualidades</span>
+                  <span className="text-white text-xs font-bold uppercase tracking-wider">Cuidado</span>
                 </div>
-                <img src="/assets/icon.jpg" className="w-full h-full object-cover group-hover:scale-105 transition" alt="Manualidades" />
+                <img src="/assets/icon.jpg" className="w-full h-full object-cover group-hover:scale-105 transition" alt="Creación" />
               </div>
-              <h3 className="font-black text-[#2F1F1F] text-md">Origami y Colores</h3>
+              <h3 className="font-black text-[#2F1F1F] text-md group-hover:text-[#FF5A1F] transition">Cuidemos la Creación</h3>
               <p className="text-xs text-[#5E4F4F] mt-1 leading-relaxed">
-                Tardes creativas de pintura, cortes de papel y plastilina para despertar la imaginación.
+                Aprendiendo a amar la naturaleza, cuidar las plantas, los animalitos y respetar el hermoso mundo que nos rodea.
               </p>
-            </div>
+            </a>
 
-            {/* Card 3 */}
-            <div className="bg-[#FFFDF9] border border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition group">
+            {/* Tarjeta 3: Lee y Reflexiona */}
+            <a
+              href="https://www.youtube.com/watch?v=Iz4oXWxP7GI&list=PLIf6THHNSwHe8cSraiC6LjOdfWIbxSIrT"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#FFFDF9] border border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition group block hover:scale-[1.01]"
+            >
               <div className="aspect-video w-full bg-yellow-100 rounded-2xl overflow-hidden mb-4 relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-yellow-600/80 to-transparent flex items-end p-3">
-                  <span className="text-white text-xs font-bold uppercase">Videos Educativos</span>
+                  <span className="text-white text-xs font-bold uppercase tracking-wider">Lectura</span>
                 </div>
-                <img src="/assets/icon.jpg" className="w-full h-full object-cover group-hover:scale-105 transition" alt="Educativos" />
+                <img src="/assets/icon.jpg" className="w-full h-full object-cover group-hover:scale-105 transition" alt="Lectura" />
               </div>
-              <h3 className="font-black text-[#2F1F1F] text-md">Aventuras y Ciencia</h3>
+              <h3 className="font-black text-[#2F1F1F] text-md group-hover:text-[#FF5A1F] transition">Lee y Reflexiona</h3>
               <p className="text-xs text-[#5E4F4F] mt-1 leading-relaxed">
-                Datos curiosos de animales, experimentos caseros seguros y retos aptos para toda la familia.
+                Lecturas interactivas de libros, momentos de análisis comprensivo y lindas enseñanzas de valores para crecer.
               </p>
-            </div>
+            </a>
 
-            {/* Card 4 */}
-            <div className="bg-[#FFFDF9] border border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition group">
+            {/* Tarjeta 4: Cocina Divertida */}
+            <a
+              href="https://www.youtube.com/watch?v=QIKEyt3i9gc&list=PLIf6THHNSwHcTltIDQCIMccwH_3-n7TIn"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-[#FFFDF9] border border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-lg transition group block hover:scale-[1.01]"
+            >
               <div className="aspect-video w-full bg-emerald-100 rounded-2xl overflow-hidden mb-4 relative">
                 <div className="absolute inset-0 bg-gradient-to-t from-emerald-600/80 to-transparent flex items-end p-3">
-                  <span className="text-white text-xs font-bold uppercase">Detrás de Cámaras</span>
+                  <span className="text-white text-xs font-bold uppercase tracking-wider">Cocina</span>
                 </div>
-                <img src="/assets/icon.jpg" className="w-full h-full object-cover group-hover:scale-105 transition" alt="Vlogs" />
+                <img src="/assets/icon.jpg" className="w-full h-full object-cover group-hover:scale-105 transition" alt="Cocina" />
               </div>
-              <h3 className="font-black text-[#2F1F1F] text-md">Detrás de Cámaras</h3>
+              <h3 className="font-black text-[#2F1F1F] text-md group-hover:text-[#FF5A1F] transition">Cocina Divertida</h3>
               <p className="text-xs text-[#5E4F4F] mt-1 leading-relaxed">
-                Cómo organizamos nuestro set de grabación, tomas graciosas y la preparación de cada video.
+                Postres sabrosos, recetas vegetales coloridas y preparaciones rápidas ideales para que los niños aprendan a comer sano.
               </p>
-            </div>
+            </a>
 
           </div>
         </div>
