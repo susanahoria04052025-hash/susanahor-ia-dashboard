@@ -26,15 +26,12 @@ export default function PatternLock({ onComplete, width = 300, height = 300 }: P
   const [currPos, setCurrPos] = useState<{ x: number; y: number } | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Guardamos una referencia para leer la secuencia en tiempo real sin reiniciar el Effect
   const pathRef = useRef<number[]>([]);
 
-  // Sincronizamos la referencia cada vez que el estado de 'path' cambia
   useEffect(() => {
     pathRef.current = path;
   }, [path]);
 
-  // Iniciar el arrastre al presionar un punto
   const startDrawing = (pointId: number, e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     setIsDrawing(true);
@@ -58,7 +55,6 @@ export default function PatternLock({ onComplete, width = 300, height = 300 }: P
     setCurrPos({ x, y });
   };
 
-  // Efecto global desacoplado (ya no depende de "path", evitando el bucle infinito)
   useEffect(() => {
     if (!isDrawing) return;
 
@@ -82,7 +78,6 @@ export default function PatternLock({ onComplete, width = 300, height = 300 }: P
       const y = ((clientY - rect.top) / rect.height) * 300;
       setCurrPos({ x, y });
 
-      // Verificamos proximidad con los 9 puntos usando la referencia "pathRef"
       const threshold = 25;
       for (const pt of POINTS) {
         const dist = Math.sqrt(Math.pow(x - pt.x, 2) + Math.pow(y - pt.y, 2));
@@ -101,7 +96,6 @@ export default function PatternLock({ onComplete, width = 300, height = 300 }: P
       setIsDrawing(false);
       setCurrPos(null);
       
-      // Verificamos la longitud utilizando la referencia actual
       if (pathRef.current.length >= 3) {
         onComplete(pathRef.current.join('-'));
       } else {
@@ -109,7 +103,6 @@ export default function PatternLock({ onComplete, width = 300, height = 300 }: P
       }
     };
 
-    // Añadimos escuchadores globales en window
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('touchmove', handleMove, { passive: false });
     window.addEventListener('mouseup', handleUp);
@@ -121,17 +114,16 @@ export default function PatternLock({ onComplete, width = 300, height = 300 }: P
       window.removeEventListener('mouseup', handleUp);
       window.removeEventListener('touchend', handleUp);
     };
-  }, [isDrawing, onComplete]); // Removido "path" de las dependencias
+  }, [isDrawing, onComplete]);
 
   return (
     <div className="flex flex-col items-center justify-center p-4">
       <svg
         ref={svgRef}
         viewBox="0 0 300 300"
-        className="touch-none select-none border border-zinc-200 dark:border-zinc-800 rounded-2xl bg-zinc-50 dark:bg-zinc-900 shadow-inner cursor-pointer"
+        className="touch-none select-none border-2 border-orange-100 rounded-3xl bg-[#FFFBF5] shadow-inner cursor-pointer"
         style={{ width, height }}
       >
-        {/* Líneas estables que conectan los puntos seleccionados */}
         {path.map((pointId, idx) => {
           if (idx === 0) return null;
           const startPt = POINTS.find((p) => p.id === path[idx - 1])!;
@@ -143,33 +135,30 @@ export default function PatternLock({ onComplete, width = 300, height = 300 }: P
               y1={startPt.y}
               x2={endPt.x}
               y2={endPt.y}
-              className="stroke-orange-500 stroke-[6]"
+              className="stroke-[#FF5A1F] stroke-[6]"
               strokeLinecap="round"
             />
           );
         })}
 
-        {/* Línea flotante que sigue al cursor/dedo */}
         {isDrawing && currPos && path.length > 0 && (
           <line
             x1={POINTS.find((p) => p.id === path[path.length - 1])!.x}
             y1={POINTS.find((p) => p.id === path[path.length - 1])!.y}
             x2={currPos.x}
             y2={currPos.y}
-            className="stroke-orange-400 stroke-[4]"
+            className="stroke-[#FF5A1F]/70 stroke-[4]"
             strokeDasharray="4 4"
             strokeLinecap="round"
           />
         )}
 
-        {/* Rejilla de 9 Nodos */}
         {POINTS.map((pt) => {
           const isSelected = path.includes(pt.id);
           const isLast = path[path.length - 1] === pt.id;
 
           return (
             <g key={pt.id}>
-              {/* Círculo invisible de captura */}
               <circle
                 cx={pt.x}
                 cy={pt.y}
@@ -181,7 +170,6 @@ export default function PatternLock({ onComplete, width = 300, height = 300 }: P
                 onTouchStart={(e) => startDrawing(pt.id, e)}
               />
               
-              {/* Anillo exterior visual */}
               <circle
                 cx={pt.x}
                 cy={pt.y}
@@ -190,25 +178,24 @@ export default function PatternLock({ onComplete, width = 300, height = 300 }: P
                 className={`transition-all duration-150 ${
                   isSelected
                     ? isLast
-                      ? 'fill-orange-100 stroke-orange-600 stroke-[3] dark:fill-orange-950/40 dark:stroke-orange-500'
-                      : 'fill-orange-50 stroke-orange-500 stroke-[2] dark:fill-orange-950/20 dark:stroke-orange-600'
-                    : 'fill-zinc-300 dark:fill-zinc-700 hover:fill-zinc-400 dark:hover:fill-zinc-600'
+                      ? 'fill-orange-100 stroke-[#FF5A1F] stroke-[3]'
+                      : 'fill-orange-50 stroke-[#FF5A1F] stroke-[2]'
+                    : 'fill-[#EADBC8] hover:fill-[#D8C4B6]'
                 }`}
               />
 
-              {/* Punto central */}
               <circle
                 cx={pt.x}
                 cy={pt.y}
                 r={isSelected ? 6 : 0}
                 pointerEvents="none"
-                className="fill-orange-600 dark:fill-orange-500 transition-all duration-150"
+                className="fill-[#FF5A1F] transition-all duration-150"
               />
             </g>
           );
         })}
       </svg>
-      <div className="mt-4 text-xs text-zinc-500 font-mono">
+      <div className="mt-4 text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
         Secuencia: {path.length > 0 ? path.join(' ➔ ') : 'Ninguna'}
       </div>
     </div>

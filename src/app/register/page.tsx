@@ -43,17 +43,21 @@ export default function RegisterPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-6">
-      <div className="w-full max-w-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-8 shadow-sm">
-        <div className="flex flex-col items-center mb-6">
-          <img src="/assets/icon.jpg" alt="Susanahoria" className="w-20 h-20 rounded-2xl shadow-sm border border-orange-200 mb-3" />
-          <h1 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50">Registro de Equipo</h1>
-          <p className="text-sm text-zinc-500 mt-1">Únete al panel de Susanahoria</p>
+    <main className="min-h-screen flex flex-col items-center justify-center bg-[#FFFDF9] p-6 selection:bg-orange-200 selection:text-orange-900 font-sans">
+      <div className="w-full max-w-md bg-white border-4 border-orange-100 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
+        {/* Círculos decorativos */}
+        <div className="absolute -top-10 -right-10 w-24 h-24 bg-pink-100 rounded-full opacity-50 blur-xl"></div>
+        <div className="absolute -bottom-10 -left-10 w-24 h-24 bg-orange-100 rounded-full opacity-50 blur-xl"></div>
+
+        <div className="flex flex-col items-center mb-6 relative">
+          <img src="/assets/icon.jpg" alt="Susanahoria" className="w-20 h-20 rounded-[1.5rem] shadow-md border-4 border-orange-200 mb-3" />
+          <h1 className="text-2xl font-black text-[#FF5A1F] tracking-tight">Registro de Equipo</h1>
+          <p className="text-xs text-pink-500 font-bold -mt-0.5">Únete al canal de Susanahoria</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 relative">
           <div>
-            <label htmlFor="name" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            <label htmlFor="name" className="block text-xs font-black uppercase text-[#4E3F3F] mb-1.5 tracking-wider">
               Nombre Completo
             </label>
             <input
@@ -61,13 +65,13 @@ export default function RegisterPage() {
               name="name"
               id="name"
               required
-              className="w-full px-4 py-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
+              className="w-full px-4 py-3 rounded-2xl border-2 border-orange-100 bg-[#FFFBF5] text-[#2F1F1F] placeholder-zinc-400 focus:ring-2 focus:ring-[#FF5A1F] focus:border-[#FF5A1F] outline-none transition text-sm font-semibold"
               placeholder="Ej. Juan Pérez"
             />
           </div>
 
           <div>
-            <label htmlFor="id" className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
+            <label htmlFor="id" className="block text-xs font-black uppercase text-[#4E3F3F] mb-1.5 tracking-wider">
               Cédula (ID Único)
             </label>
             <input
@@ -75,33 +79,33 @@ export default function RegisterPage() {
               name="id"
               id="id"
               required
-              className="w-full px-4 py-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 text-zinc-950 dark:text-zinc-50 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition"
+              className="w-full px-4 py-3 rounded-2xl border-2 border-orange-100 bg-[#FFFBF5] text-[#2F1F1F] placeholder-zinc-400 focus:ring-2 focus:ring-[#FF5A1F] focus:border-[#FF5A1F] outline-none transition text-sm font-semibold"
               placeholder="Ej. 104523456"
             />
           </div>
 
-          <div className="flex flex-col items-center py-2">
-            <span className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2 self-start">
+          <div className="flex flex-col items-center py-1">
+            <span className="block text-xs font-black uppercase text-[#4E3F3F] mb-2 self-start tracking-wider">
               Dibuja tu patrón de acceso (mínimo 3 puntos)
             </span>
             <PatternLock onComplete={handlePatternComplete} />
           </div>
 
-          {error && <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/20 px-4 py-2 rounded-xl text-center">{error}</p>}
-          {success && <p className="text-sm text-green-500 bg-green-50 dark:bg-green-950/20 px-4 py-2 rounded-xl text-center">{success}</p>}
+          {error && <p className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-4 py-3 rounded-xl text-center">{error}</p>}
+          {success && <p className="text-xs font-bold text-green-600 bg-green-50 border border-green-100 px-4 py-3 rounded-xl text-center">{success}</p>}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-4 rounded-2xl bg-orange-600 hover:bg-orange-500 disabled:bg-orange-800 text-white font-semibold transition shadow-md"
+            className="w-full py-4 rounded-2xl bg-[#FF5A1F] hover:bg-[#E04810] disabled:bg-orange-800 text-white font-black transition shadow-md shadow-orange-500/10 hover:scale-[1.01]"
           >
-            {loading ? 'Registrando...' : 'Completar Registro'}
+            {loading ? 'Registrando...' : 'Completar Registro 🥕'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-zinc-500 mt-6">
+        <p className="text-center text-xs text-[#5E4F4F] mt-6 font-semibold relative">
           ¿Ya tienes cuenta?{' '}
-          <a href="/login" className="text-orange-600 hover:underline font-medium">
+          <a href="/login" className="text-[#FF5A1F] hover:underline font-bold">
             Inicia sesión aquí
           </a>
         </p>
