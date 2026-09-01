@@ -9,16 +9,17 @@ model User {
 }
 
 model Script {
-  id            String   @id // Generado con crypto.randomUUID() en el código
-  title         String
-  scheduledDate String   // Fecha programada en string (ej: "2026-09-15")
-  videoType     String   // Valores recomendados: "SHORT" o "HORIZONTAL"
-  theme         String
-  materials     String   // Lista de materiales como texto plano
-  content       String?  // <-- Agregamos esta línea para almacenar el guion en texto
-  createdById   String
-  createdBy     User     @relation(fields: [createdById], references: [id])
-  createdAt     String   // Guardado como string ISO
-  status        String   @default("PENDIENTE") // <--- AGREGA ESTA LÍNEA EXACTAMENTE AQUÍ
+  id               String   @id // Generado con crypto.randomUUID() en el código
+  title            String
+  scheduledDate    String   // Fecha programada en string (ej: "2026-09-15")
+  videoType        String   // Valores recomendados: "SHORT" o "HORIZONTAL"
+  theme            String
+  materials        String   // Lista de materiales como texto plano
+  content          String?  // Almacena el guion en texto
+  status           String   @default("PENDIENTE") // "PENDIENTE" o "APROBADO"
+  checkedMaterials String   @default("") // Almacena los materiales marcados del checklist separados por comas
+  createdById      String
+  createdBy        User     @relation(fields: [createdById], references: [id])
+  createdAt        String   // Guardado como string ISO
   @@map("script")
 }

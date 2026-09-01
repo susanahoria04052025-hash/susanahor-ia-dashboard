@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Fredoka, Inter } from 'next/font/google';
-import { getCurrentUser, getScripts, createScript, approveScript, updateScriptContent, logout } from '@/app/actions/scripts';
+import { getCurrentUser, getScripts, createScript, approveScript, updateScriptContent, toggleMaterialStatus, logout } from '@/app/actions/scripts';
 
 // Tipografía: Fredoka para titulares (redonda, juguetona — encaja con un canal de una
 // creadora de 12 años) + Inter para texto de cuerpo, legible en paneles densos.
@@ -25,6 +25,7 @@ interface Script {
   materials: string;
   status: string; // 'PENDIENTE' | 'APROBADO'
   content?: string | null; // Texto completo del guion, redactado desde la Card de Guiones
+  checkedMaterials?: string | null; // Materiales marcados como listos, separados por comas
 }
 
 const SEPT_YEAR = 2026;
@@ -51,7 +52,7 @@ export default function DashboardPage() {
   const [formDate, setFormDate] = useState('');
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
-  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [savingMaterial, setSavingMaterial] = useState<string | null>(null);
   const [draftContent, setDraftContent] = useState('');
   const [savingContent, setSavingContent] = useState(false);
   const router = useRouter();
@@ -163,13 +164,33 @@ export default function DashboardPage() {
     setSavingContent(false);
   };
 
-  const toggleChecklistItem = (key: string) => {
-    setCheckedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+  // Checklist colaborativo: el estado "marcado" vive en `checkedMaterials` del guion en
+  // Neon, no en el cliente — así ADMIN y USER ven exactamente lo mismo. Actualización
+  // optimista igual que approve/save, revertida si el servidor falla.
+  const handleToggleMaterial = async (scriptId: string, materialName: string) => {
+    const script = scripts.find((s) => s.id === scriptId);
+    if (!script) return;
+
+    const currentChecked = script.checkedMaterials
+      ? script.checkedMaterials.split(',').map((m) => m.trim()).filter(Boolean)
+      : [];
+    const isChecked = currentChecked.includes(materialName);
+    const nextChecked = isChecked
+      ? currentChecked.filter((m) => m !== materialName)
+      : [...currentChecked, materialName];
+    const nextString = nextChecked.join(', ');
+
+    setSavingMaterial(materialName);
+    setError('');
+    setScripts((prev) => prev.map((s) => (s.id === scriptId ? { ...s, checkedMaterials: nextString } : s)));
+
+    const res = await toggleMaterialStatus(scriptId, materialName);
+
+    if (!res.success) {
+      setScripts((prev) => prev.map((s) => (s.id === scriptId ? { ...s, checkedMaterials: script.checkedMaterials } : s)));
+      setError(res.error || 'Error al actualizar el checklist.');
+    }
+    setSavingMaterial(null);
   };
 
   if (loading) {
@@ -187,6 +208,9 @@ export default function DashboardPage() {
 
   const isAdmin = user?.role === 'ADMIN';
   const materialsList = selectedScript ? selectedScript.materials.split(',').map((m) => m.trim()).filter(Boolean) : [];
+  const checkedMaterialsList = selectedScript?.checkedMaterials
+    ? selectedScript.checkedMaterials.split(',').map((m) => m.trim()).filter(Boolean)
+    : [];
 
   // Un ADMIN puede crear guion cuando eligió un día y ese día todavía está libre.
   // (No existe hoy un estado de "día de descanso" en el modelo — todos los días de
@@ -416,35 +440,6 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <div className="mt-5 pt-4 border-t" style={{ borderColor: '#EFE1CB' }}>
-            <h4 className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color: '#BDA987' }}>
-              Próximos guiones
-            </h4>
-            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-              {scripts.length === 0 && (
-                <p className="text-xs" style={{ color: '#A0865F' }}>
-                  Aún no hay guiones programados.
-                </p>
-              )}
-              {scripts.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => setSelectedDate(s.scheduledDate)}
-                  className="w-full flex items-center justify-between text-left text-xs px-3 py-2 rounded-xl transition"
-                  style={
-                    selectedDate === s.scheduledDate
-                      ? { background: '#2B2118', color: '#FBF3E7' }
-                      : { background: '#F5F0E1', color: '#4A3C28' }
-                  }
-                >
-                  <span className="truncate">{s.title}</span>
-                  <span className="text-[10px] ml-2 shrink-0" style={{ opacity: 0.7 }}>
-                    {new Date(s.scheduledDate + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
         </section>
 
         {/* ---------- Card 3: Logística (formulario de creación — SOLO ADMIN) ---------- */}
@@ -570,18 +565,19 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 {materialsList.map((item, idx) => {
-                  const itemKey = `${selectedScript.id}-${idx}`;
-                  const checked = checkedItems.has(itemKey);
+                  const checked = checkedMaterialsList.includes(item);
+                  const isSaving = savingMaterial === item;
                   return (
                     <label
-                      key={itemKey}
+                      key={`${selectedScript.id}-${idx}`}
                       className="flex items-center gap-3 text-sm px-3 py-2.5 rounded-xl cursor-pointer"
-                      style={{ background: '#F5F0E1' }}
+                      style={{ background: '#F5F0E1', opacity: isSaving ? 0.6 : 1 }}
                     >
                       <input
                         type="checkbox"
                         checked={checked}
-                        onChange={() => toggleChecklistItem(itemKey)}
+                        disabled={isSaving}
+                        onChange={() => handleToggleMaterial(selectedScript.id, item)}
                         className="w-4 h-4 rounded"
                         style={{ accentColor: '#F27B1C' }}
                       />

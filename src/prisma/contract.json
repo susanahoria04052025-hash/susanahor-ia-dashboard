@@ -19,6 +19,13 @@
         "models": {
           "Script": {
             "fields": {
+              "checkedMaterials": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "content": {
                 "nullable": true,
                 "type": {
@@ -109,6 +116,9 @@
             },
             "storage": {
               "fields": {
+                "checkedMaterials": {
+                  "column": "checkedMaterials"
+                },
                 "content": {
                   "column": "content"
                 },
@@ -232,6 +242,15 @@
           "table": {
             "script": {
               "columns": {
+                "checkedMaterials": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": ""
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "content": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -369,7 +388,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "e404552b86c6f971493ed3d2e46277b60c2c1541477aadf4b25581a7021731db"
+    "storageHash": "9162f15b27f675d3568886dbbe39c41fc8308a0418bd1b9ba14b31c6e1637b95"
   },
   "capabilities": {
     "postgres": {

@@ -61,6 +61,7 @@ export async function createScript(formData: FormData) {
       theme,
       materials,
       content: '', // El texto del guion se redacta después, desde la Card de Guiones
+      checkedMaterials: '', // Ningún material marcado como listo todavía
       status: 'PENDIENTE', // Todo guion nuevo nace pendiente de aprobación del equipo
       createdById: user.id,
       createdAt: new Date().toISOString(),
@@ -118,6 +119,46 @@ export async function updateScriptContent(scriptId: string, content: string) {
   } catch (error) {
     console.error('Error al guardar el guion:', error);
     return { success: false, error: 'Error al guardar el guion en el servidor.' };
+  }
+}
+
+// Marcar / desmarcar un material como listo en el checklist (colaborativo: ADMIN y USER ven lo mismo)
+export async function toggleMaterialStatus(scriptId: string, materialName: string) {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return { success: false, error: 'Debes iniciar sesión para actualizar el checklist.' };
+  }
+
+  if (!scriptId || !materialName) {
+    return { success: false, error: 'Material no válido.' };
+  }
+
+  try {
+    const script = await db.orm.public.Script.where({ id: scriptId }).first();
+
+    if (!script) {
+      return { success: false, error: 'Guion no encontrado.' };
+    }
+
+    // Parseamos la cadena separada por comas a una lista limpia de materiales marcados
+    const checked = script.checkedMaterials
+      ? script.checkedMaterials.split(',').map((m) => m.trim()).filter(Boolean)
+      : [];
+
+    const alreadyChecked = checked.includes(materialName);
+    const updatedChecked = alreadyChecked
+      ? checked.filter((m) => m !== materialName)
+      : [...checked, materialName];
+
+    const updatedString = updatedChecked.join(', ');
+
+    await db.orm.public.Script.where({ id: scriptId }).update({ checkedMaterials: updatedString });
+
+    return { success: true, checkedMaterials: updatedString };
+  } catch (error) {
+    console.error('Error al actualizar el checklist:', error);
+    return { success: false, error: 'Error al actualizar el checklist en el servidor.' };
   }
 }
 
