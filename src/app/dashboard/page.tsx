@@ -188,6 +188,75 @@ export default function DashboardPage() {
   const isAdmin = user?.role === 'ADMIN';
   const materialsList = selectedScript ? selectedScript.materials.split(',').map((m) => m.trim()).filter(Boolean) : [];
 
+  // Un ADMIN puede crear guion cuando eligió un día y ese día todavía está libre.
+  // (No existe hoy un estado de "día de descanso" en el modelo — todos los días de
+  // Septiembre son laborables salvo que ya tengan guion programado.)
+  const canAdminCreate = isAdmin && !!selectedDate && !selectedScript;
+  const shouldShowDetails = !!selectedScript || canAdminCreate;
+
+  // Card del calendario, reutilizada tanto en la vista detallada (dentro de la rejilla)
+  // como en la vista centrada (cuando no hay nada que mostrar aún).
+  const calendarCard = (
+    <section
+      className="rounded-3xl p-5 sm:p-6"
+      style={{ background: '#FFFDF8', border: '1px solid #F0E2C7', boxShadow: '0 10px 30px -18px rgba(178,101,20,0.35)' }}
+    >
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }} className="text-xl">
+            Agenda
+          </h2>
+          <p className="text-xs mt-0.5" style={{ color: '#A0865F' }}>
+            Naranja: día libre · Verde: guion programado
+          </p>
+        </div>
+        <div className="flex gap-2 text-[10px] font-semibold">
+          <span className="flex items-center gap-1"><i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#F6A24A' }} />Libre</span>
+          <span className="flex items-center gap-1"><i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#7FB876' }} />Programado</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2 mb-1.5 text-center">
+        {WEEKDAY_LABELS.map((w) => (
+          <span key={w} className="text-[10px] font-bold" style={{ color: '#BDA987' }}>
+            {w}
+          </span>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+        {Array.from({ length: firstDayOffset() }).map((_, i) => (
+          <div key={`empty-${i}`} />
+        ))}
+        {Array.from({ length: DAYS_IN_SEPT }).map((_, i) => {
+          const day = i + 1;
+          const key = dateKey(day);
+          const script = scriptsByDate[key];
+          const isSelected = selectedDate === key;
+          const isApproved = script?.status === 'APROBADO';
+
+          return (
+            <button
+              key={key}
+              onClick={() => setSelectedDate(key)}
+              className="aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-semibold transition"
+              style={
+                isSelected
+                  ? { background: '#2B2118', color: '#FBF3E7' }
+                  : script
+                  ? { background: isApproved ? '#DCEEDB' : '#E9F3E4', color: '#3E7A34', border: '1px solid #BCDDB0' }
+                  : { background: '#FCEBD3', color: '#B5540A', border: '1px solid #F6D9AD' }
+              }
+            >
+              <span>{day}</span>
+              {script && <span className="text-[9px] mt-0.5">{isApproved ? '✔' : '●'}</span>}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+
   return (
     <div
       className={`${fredoka.variable} ${inter.variable} min-h-screen`}
@@ -243,66 +312,12 @@ export default function DashboardPage() {
       )}
 
       {/* ===== Contenedor principal ===== */}
-      <main className="print:hidden px-5 sm:px-8 py-6 max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-6">
+      <main className="print:hidden px-5 sm:px-8 py-6 max-w-7xl mx-auto">
+        {shouldShowDetails ? (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* ---------- Card 1: Agenda (calendario interactivo) ---------- */}
-        <section
-          className="xl:col-span-7 rounded-3xl p-5 sm:p-6"
-          style={{ background: '#FFFDF8', border: '1px solid #F0E2C7', boxShadow: '0 10px 30px -18px rgba(178,101,20,0.35)' }}
-        >
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }} className="text-xl">
-                Agenda
-              </h2>
-              <p className="text-xs mt-0.5" style={{ color: '#A0865F' }}>
-                Naranja: día libre · Verde: guion programado
-              </p>
-            </div>
-            <div className="flex gap-2 text-[10px] font-semibold">
-              <span className="flex items-center gap-1"><i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#F6A24A' }} />Libre</span>
-              <span className="flex items-center gap-1"><i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#7FB876' }} />Programado</span>
-            </div>
-          </div>
+        <div className="xl:col-span-7">{calendarCard}</div>
 
-          <div className="grid grid-cols-7 gap-1.5 sm:gap-2 mb-1.5 text-center">
-            {WEEKDAY_LABELS.map((w) => (
-              <span key={w} className="text-[10px] font-bold" style={{ color: '#BDA987' }}>
-                {w}
-              </span>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-            {Array.from({ length: firstDayOffset() }).map((_, i) => (
-              <div key={`empty-${i}`} />
-            ))}
-            {Array.from({ length: DAYS_IN_SEPT }).map((_, i) => {
-              const day = i + 1;
-              const key = dateKey(day);
-              const script = scriptsByDate[key];
-              const isSelected = selectedDate === key;
-              const isApproved = script?.status === 'APROBADO';
-
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelectedDate(key)}
-                  className="aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-semibold transition"
-                  style={
-                    isSelected
-                      ? { background: '#2B2118', color: '#FBF3E7' }
-                      : script
-                      ? { background: isApproved ? '#DCEEDB' : '#E9F3E4', color: '#3E7A34', border: '1px solid #BCDDB0' }
-                      : { background: '#FCEBD3', color: '#B5540A', border: '1px solid #F6D9AD' }
-                  }
-                >
-                  <span>{day}</span>
-                  {script && <span className="text-[9px] mt-0.5">{isApproved ? '✔' : '●'}</span>}
-                </button>
-              );
-            })}
-          </div>
-        </section>
 
         {/* ---------- Card 2: Guiones (detalle del día + próximos) ---------- */}
         <section
@@ -618,6 +633,19 @@ export default function DashboardPage() {
             </div>
           )}
         </section>
+        </div>
+        ) : (
+        <div className="max-w-md w-full mx-auto space-y-4">
+          {calendarCard}
+          <div
+            className="rounded-2xl px-4 py-3.5 text-sm text-center leading-relaxed bg-white"
+            style={{ border: '1px solid #F6D9AD', color: '#6B5A3E' }}
+          >
+            💡 Haz clic en los días de color verde en el calendario para ver el guion y los materiales
+            programados por el manager 🥕.
+          </div>
+        </div>
+        )}
       </main>
 
       {/* ===== Hoja de producción — visible ÚNICAMENTE al imprimir / exportar PDF ===== */}
