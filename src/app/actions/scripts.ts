@@ -35,6 +35,8 @@ export async function getScripts() {
 export async function createScript(formData: FormData) {
   const user = await getCurrentUser();
 
+  // Protección por código: aunque el formulario esté oculto en la UI para USER,
+  // esta verificación en el servidor es la que realmente impide la escritura.
   if (!user || user.role !== 'ADMIN') {
     return { success: false, error: 'No tienes privilegios de Administrador para añadir guiones.' };
   }
@@ -58,6 +60,7 @@ export async function createScript(formData: FormData) {
       videoType,
       theme,
       materials,
+      status: 'PENDIENTE', // Todo guion nuevo nace pendiente de aprobación del equipo
       createdById: user.id,
       createdAt: new Date().toISOString(),
     });
@@ -66,6 +69,30 @@ export async function createScript(formData: FormData) {
   } catch (error) {
     console.error('Error al crear guion:', error);
     return { success: false, error: 'Error al registrar el guion en el servidor.' };
+  }
+}
+
+// Aprobar la fecha de grabación de un guion (flujo del equipo de producción, ej. USER)
+export async function approveScript(scriptId: string) {
+  const user = await getCurrentUser();
+
+  // Solo un usuario autenticado puede confirmar que puede grabar ese día.
+  // Si más adelante quieres restringirlo únicamente a role === 'USER'
+  // (dejando fuera incluso al ADMIN), agrega esa condición aquí.
+  if (!user) {
+    return { success: false, error: 'Debes iniciar sesión para aprobar una fecha.' };
+  }
+
+  if (!scriptId) {
+    return { success: false, error: 'Guion no válido.' };
+  }
+
+  try {
+    await db.orm.public.Script.where({ id: scriptId }).update({ status: 'APROBADO' });
+    return { success: true };
+  } catch (error) {
+    console.error('Error al aprobar guion:', error);
+    return { success: false, error: 'Error al confirmar la fecha en el servidor.' };
   }
 }
 

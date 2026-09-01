@@ -1,8 +1,14 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, getScripts, createScript, logout } from '@/app/actions/scripts';
+import { Fredoka, Inter } from 'next/font/google';
+import { getCurrentUser, getScripts, createScript, approveScript, logout } from '@/app/actions/scripts';
+
+// Tipografía: Fredoka para titulares (redonda, juguetona — encaja con un canal de una
+// creadora de 12 años) + Inter para texto de cuerpo, legible en paneles densos.
+const fredoka = Fredoka({ subsets: ['latin'], weight: ['500', '600', '700'], variable: '--font-display' });
+const inter = Inter({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-body' });
 
 interface User {
   id: string;
@@ -13,10 +19,26 @@ interface User {
 interface Script {
   id: string;
   title: string;
-  scheduledDate: string;
+  scheduledDate: string; // 'YYYY-MM-DD'
   videoType: string;
   theme: string;
   materials: string;
+  status: string; // 'PENDIENTE' | 'APROBADO'
+}
+
+const SEPT_YEAR = 2026;
+const SEPT_MONTH = 8; // Septiembre (0-indexado)
+const DAYS_IN_SEPT = new Date(SEPT_YEAR, SEPT_MONTH + 1, 0).getDate();
+const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+function dateKey(day: number) {
+  return `${SEPT_YEAR}-${String(SEPT_MONTH + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+// Offset (0 = Lunes) del primer día del mes, para alinear la grilla del calendario
+function firstDayOffset() {
+  const jsDay = new Date(SEPT_YEAR, SEPT_MONTH, 1).getDay(); // 0=Dom ... 6=Sáb
+  return (jsDay + 6) % 7;
 }
 
 export default function DashboardPage() {
@@ -25,6 +47,10 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
+  const [formDate, setFormDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const router = useRouter();
 
   // Carga inicial de datos de sesión y guiones
@@ -46,6 +72,24 @@ export default function DashboardPage() {
     loadData();
   }, []);
 
+  // Mapa rápido fecha -> guion, para pintar el calendario y resolver el día seleccionado
+  const scriptsByDate = useMemo(() => {
+    const map: Record<string, Script> = {};
+    scripts.forEach((s) => {
+      map[s.scheduledDate] = s;
+    });
+    return map;
+  }, [scripts]);
+
+  const selectedScript = selectedDate ? scriptsByDate[selectedDate] ?? null : null;
+
+  // Si un ADMIN selecciona un día libre, precargamos la fecha en el formulario de Logística
+  useEffect(() => {
+    if (user?.role === 'ADMIN' && selectedDate && !scriptsByDate[selectedDate]) {
+      setFormDate(selectedDate);
+    }
+  }, [selectedDate, scriptsByDate, user]);
+
   const handleLogout = async () => {
     await logout();
     router.push('/login');
@@ -53,6 +97,7 @@ export default function DashboardPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (user?.role !== 'ADMIN') return; // Protección por código, además de la visual
     setError('');
     setFormLoading(true);
 
@@ -63,7 +108,7 @@ export default function DashboardPage() {
 
     if (res.success) {
       form.reset();
-      // Recargar la agenda de guiones desde la base de datos
+      setFormDate('');
       const updatedScripts = await getScripts();
       setScripts(updatedScripts as Script[]);
     } else {
@@ -72,81 +117,303 @@ export default function DashboardPage() {
     setFormLoading(false);
   };
 
+  // Aprobación reactiva: actualizamos el estado local al instante (optimista) y
+  // revertimos si el servidor responde con error. Como selectedScript se deriva de
+  // `scripts`, el calendario y la tarjeta de detalle se sincronizan solos.
+  const handleApprove = async (scriptId: string) => {
+    setApprovingId(scriptId);
+    setError('');
+    setScripts((prev) => prev.map((s) => (s.id === scriptId ? { ...s, status: 'APROBADO' } : s)));
+
+    const res = await approveScript(scriptId);
+
+    if (!res.success) {
+      setScripts((prev) => prev.map((s) => (s.id === scriptId ? { ...s, status: 'PENDIENTE' } : s)));
+      setError(res.error || 'Error al aprobar la fecha.');
+    }
+    setApprovingId(null);
+  };
+
+  const toggleChecklistItem = (key: string) => {
+    setCheckedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-zinc-950 text-orange-500">
-        <div className="text-center font-semibold">Cargando panel de Susanahoria...</div>
+      <div
+        className={`${fredoka.variable} ${inter.variable} min-h-screen flex items-center justify-center`}
+        style={{ background: '#FBF3E7', fontFamily: 'var(--font-body)' }}
+      >
+        <div className="text-center font-semibold" style={{ color: '#E2600B' }}>
+          Cargando panel de Susanahoria...
+        </div>
       </div>
     );
   }
 
+  const isAdmin = user?.role === 'ADMIN';
+  const materialsList = selectedScript ? selectedScript.materials.split(',').map((m) => m.trim()).filter(Boolean) : [];
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-      {/* Cabecera / Navbar */}
-      <header className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+    <div
+      className={`${fredoka.variable} ${inter.variable} min-h-screen`}
+      style={{ background: '#FBF3E7', fontFamily: 'var(--font-body)', color: '#2B2118' }}
+    >
+      {/* ===== Cabecera ===== */}
+      <header
+        className="sticky top-0 z-40 px-5 sm:px-8 py-4 flex items-center justify-between border-b"
+        style={{ background: 'rgba(251,243,231,0.9)', backdropFilter: 'blur(8px)', borderColor: '#EFE1CB' }}
+      >
         <div className="flex items-center gap-3">
-          <img src="/assets/icon.jpg" alt="Susanahoria" className="w-10 h-10 rounded-xl" />
+          <img src="/assets/icon.jpg" alt="Susanahoria" className="w-11 h-11 rounded-2xl shadow-sm" style={{ border: '2px solid #F6A24A' }} />
           <div>
-            <h1 className="text-md font-bold tracking-tight text-white">Susanahoria CMS</h1>
-            <p className="text-xs text-zinc-500">Agenda & Logística de Contenido</p>
+            <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }} className="text-lg leading-tight" >
+              Susanahoria
+            </h1>
+            <p className="text-xs" style={{ color: '#A0865F' }}>
+              Agenda de grabación · Septiembre 2026
+            </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="hidden sm:flex flex-col items-end">
-            <span className="text-sm font-semibold text-white">{user?.name}</span>
-            <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${
-              user?.role === 'ADMIN' ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20' : 'bg-zinc-800 text-zinc-400'
-            }`}>
-              {user?.role}
+            <span className="text-sm font-semibold">{user?.name}</span>
+            <span
+              className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+              style={
+                isAdmin
+                  ? { background: '#FCE3C6', color: '#B5540A', border: '1px solid #F6A24A' }
+                  : { background: '#F1E7D4', color: '#8A7B68', border: '1px solid #E4D5B6' }
+              }
+            >
+              {isAdmin ? 'Manager' : 'Producción'}
             </span>
           </div>
           <button
             onClick={handleLogout}
-            className="text-xs font-semibold px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl transition"
+            className="text-xs font-semibold px-4 py-2 rounded-xl transition"
+            style={{ background: '#F1E7D4', color: '#6B5A3E' }}
           >
             Salir
           </button>
         </div>
       </header>
 
-      {/* Contenedor Principal */}
-      <main className="flex-1 p-6 max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* Lado Izquierdo: Formulario de adición de guion (Solo para ADMIN) */}
-        {user?.role === 'ADMIN' && (
-          <section className="lg:col-span-4 bg-zinc-900 border border-zinc-800 rounded-3xl p-6 self-start shadow-xl">
-            <h2 className="text-lg font-bold text-white mb-1">Añadir Nuevo Guion</h2>
-            <p className="text-xs text-zinc-500 mb-6">Planifica los temas y requerimientos para el equipo</p>
+      {error && (
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-4">
+          <p className="text-xs px-4 py-2.5 rounded-xl" style={{ background: '#FBE4DC', color: '#B0431F', border: '1px solid #F3B9A4' }}>
+            {error}
+          </p>
+        </div>
+      )}
+
+      {/* ===== Contenedor principal ===== */}
+      <main className="px-5 sm:px-8 py-6 max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* ---------- Card 1: Agenda (calendario interactivo) ---------- */}
+        <section
+          className="xl:col-span-7 rounded-3xl p-5 sm:p-6"
+          style={{ background: '#FFFDF8', border: '1px solid #F0E2C7', boxShadow: '0 10px 30px -18px rgba(178,101,20,0.35)' }}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }} className="text-xl">
+                Agenda
+              </h2>
+              <p className="text-xs mt-0.5" style={{ color: '#A0865F' }}>
+                Naranja: día libre · Verde: guion programado
+              </p>
+            </div>
+            <div className="flex gap-2 text-[10px] font-semibold">
+              <span className="flex items-center gap-1"><i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#F6A24A' }} />Libre</span>
+              <span className="flex items-center gap-1"><i className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: '#7FB876' }} />Programado</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-2 mb-1.5 text-center">
+            {WEEKDAY_LABELS.map((w) => (
+              <span key={w} className="text-[10px] font-bold" style={{ color: '#BDA987' }}>
+                {w}
+              </span>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+            {Array.from({ length: firstDayOffset() }).map((_, i) => (
+              <div key={`empty-${i}`} />
+            ))}
+            {Array.from({ length: DAYS_IN_SEPT }).map((_, i) => {
+              const day = i + 1;
+              const key = dateKey(day);
+              const script = scriptsByDate[key];
+              const isSelected = selectedDate === key;
+              const isApproved = script?.status === 'APROBADO';
+
+              return (
+                <button
+                  key={key}
+                  onClick={() => setSelectedDate(key)}
+                  className="aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-semibold transition"
+                  style={
+                    isSelected
+                      ? { background: '#2B2118', color: '#FBF3E7' }
+                      : script
+                      ? { background: isApproved ? '#DCEEDB' : '#E9F3E4', color: '#3E7A34', border: '1px solid #BCDDB0' }
+                      : { background: '#FCEBD3', color: '#B5540A', border: '1px solid #F6D9AD' }
+                  }
+                >
+                  <span>{day}</span>
+                  {script && <span className="text-[9px] mt-0.5">{isApproved ? '✔' : '●'}</span>}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ---------- Card 2: Guiones (detalle del día + próximos) ---------- */}
+        <section
+          className="xl:col-span-5 rounded-3xl p-5 sm:p-6 flex flex-col"
+          style={{ background: '#FFFDF8', border: '1px solid #F0E2C7', boxShadow: '0 10px 30px -18px rgba(178,101,20,0.35)' }}
+        >
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }} className="text-xl mb-4">
+            Guiones
+          </h2>
+
+          {!selectedDate && (
+            <p className="text-sm" style={{ color: '#A0865F' }}>
+              Selecciona un día en el calendario para ver los detalles.
+            </p>
+          )}
+
+          {selectedDate && !selectedScript && (
+            <div className="rounded-2xl p-4 text-sm" style={{ background: '#FCEBD3', color: '#8A5A1E' }}>
+              {isAdmin
+                ? 'Día libre. Usa la tarjeta de Logística para programar un guion aquí.'
+                : 'No hay guion programado para este día todavía.'}
+            </div>
+          )}
+
+          {selectedScript && (
+            <div className="rounded-2xl p-4 space-y-3" style={{ background: '#F5F0E1' }}>
+              <div className="flex items-center justify-between">
+                <span
+                  className="text-[9px] font-bold px-2.5 py-1 rounded-full"
+                  style={
+                    selectedScript.videoType === 'SHORT'
+                      ? { background: '#DCEEDB', color: '#3E7A34' }
+                      : { background: '#DCE7F3', color: '#2E5E8C' }
+                  }
+                >
+                  {selectedScript.videoType === 'SHORT' ? 'Vertical (Short)' : 'Horizontal'}
+                </span>
+                <span
+                  className="text-[9px] font-bold px-2.5 py-1 rounded-full"
+                  style={
+                    selectedScript.status === 'APROBADO'
+                      ? { background: '#DCEEDB', color: '#3E7A34' }
+                      : { background: '#FCE3C6', color: '#B5540A' }
+                  }
+                >
+                  {selectedScript.status === 'APROBADO' ? 'Aprobado' : 'Pendiente'}
+                </span>
+              </div>
+              <h3 className="text-md font-bold">{selectedScript.title}</h3>
+              <p className="text-xs" style={{ color: '#6B5A3E' }}>
+                <span className="font-semibold">Enfoque:</span> {selectedScript.theme}
+              </p>
+            </div>
+          )}
+
+          <div className="mt-5 pt-4 border-t" style={{ borderColor: '#EFE1CB' }}>
+            <h4 className="text-[10px] font-bold uppercase tracking-wide mb-2" style={{ color: '#BDA987' }}>
+              Próximos guiones
+            </h4>
+            <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+              {scripts.length === 0 && (
+                <p className="text-xs" style={{ color: '#A0865F' }}>
+                  Aún no hay guiones programados.
+                </p>
+              )}
+              {scripts.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setSelectedDate(s.scheduledDate)}
+                  className="w-full flex items-center justify-between text-left text-xs px-3 py-2 rounded-xl transition"
+                  style={
+                    selectedDate === s.scheduledDate
+                      ? { background: '#2B2118', color: '#FBF3E7' }
+                      : { background: '#F5F0E1', color: '#4A3C28' }
+                  }
+                >
+                  <span className="truncate">{s.title}</span>
+                  <span className="text-[10px] ml-2 shrink-0" style={{ opacity: 0.7 }}>
+                    {new Date(s.scheduledDate + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ---------- Card 3: Logística (formulario de creación — SOLO ADMIN) ---------- */}
+        {isAdmin && (
+          <section
+            className="xl:col-span-7 rounded-3xl p-5 sm:p-6"
+            style={{ background: '#FFFDF8', border: '1px solid #F0E2C7', boxShadow: '0 10px 30px -18px rgba(178,101,20,0.35)' }}
+          >
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }} className="text-xl mb-1">
+              Logística
+            </h2>
+            <p className="text-xs mb-5" style={{ color: '#A0865F' }}>
+              Programa un guion en un día libre del calendario.
+            </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">Título del Video</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: '#8A7B68' }}>
+                  Título del video
+                </label>
                 <input
                   type="text"
                   name="title"
                   required
                   placeholder="Ej. Receta de Zanahoria Crujiente"
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-950 text-white placeholder-zinc-600 focus:ring-2 focus:ring-orange-500 outline-none transition text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition"
+                  style={{ border: '1px solid #EAD9B4', background: '#FFFDF8' }}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">Fecha</label>
+                  <label className="block text-xs font-semibold mb-1" style={{ color: '#8A7B68' }}>
+                    Fecha
+                  </label>
                   <input
                     type="date"
                     name="scheduledDate"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-950 text-white focus:ring-2 focus:ring-orange-500 outline-none transition text-sm"
+                    min={`${SEPT_YEAR}-${String(SEPT_MONTH + 1).padStart(2, '0')}-01`}
+                    max={dateKey(DAYS_IN_SEPT)}
+                    value={formDate}
+                    onChange={(e) => setFormDate(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition"
+                    style={{ border: '1px solid #EAD9B4', background: '#FFFDF8' }}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">Tipo</label>
+                  <label className="block text-xs font-semibold mb-1" style={{ color: '#8A7B68' }}>
+                    Tipo
+                  </label>
                   <select
                     name="videoType"
                     required
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-950 text-white focus:ring-2 focus:ring-orange-500 outline-none transition text-sm"
+                    className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition"
+                    style={{ border: '1px solid #EAD9B4', background: '#FFFDF8' }}
                   >
                     <option value="SHORT">Short (Vertical)</option>
                     <option value="HORIZONTAL">Horizontal</option>
@@ -155,98 +422,127 @@ export default function DashboardPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">Tema / Idea Central</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: '#8A7B68' }}>
+                  Tema / idea central
+                </label>
                 <input
                   type="text"
                   name="theme"
                   required
                   placeholder="Ej. Cocina rápida saludable"
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-950 text-white placeholder-zinc-600 focus:ring-2 focus:ring-orange-500 outline-none transition text-sm"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition"
+                  style={{ border: '1px solid #EAD9B4', background: '#FFFDF8' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase text-zinc-400 mb-1">Materiales Necesarios</label>
+                <label className="block text-xs font-semibold mb-1" style={{ color: '#8A7B68' }}>
+                  Materiales necesarios
+                </label>
                 <textarea
                   name="materials"
                   required
                   rows={3}
                   placeholder="Ej. 3 zanahorias, licuadora, aro de luz, guantes verdes"
-                  className="w-full px-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-950 text-white placeholder-zinc-600 focus:ring-2 focus:ring-orange-500 outline-none transition text-sm resize-none"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm outline-none transition resize-none"
+                  style={{ border: '1px solid #EAD9B4', background: '#FFFDF8' }}
                 />
               </div>
-
-              {error && <p className="text-xs text-red-500 bg-red-950/20 px-3 py-2 rounded-lg text-center border border-red-950">{error}</p>}
 
               <button
                 type="submit"
                 disabled={formLoading}
-                className="w-full py-3 bg-orange-600 hover:bg-orange-500 disabled:bg-orange-800 text-white font-semibold rounded-xl text-sm transition shadow-lg shadow-orange-950/20"
+                className="w-full py-3 font-semibold rounded-xl text-sm transition"
+                style={{ background: formLoading ? '#F6C08A' : '#F27B1C', color: '#FFFDF8' }}
               >
-                {formLoading ? 'Registrando...' : 'Programar Guion'}
+                {formLoading ? 'Programando...' : 'Programar guion'}
               </button>
             </form>
           </section>
         )}
 
-        {/* Lado Derecho: Listado de Guiones Programados */}
-        <section className={`${user?.role === 'ADMIN' ? 'lg:col-span-8' : 'lg:col-span-12'} space-y-6`}>
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h2 className="text-lg font-bold text-white">Cronograma de Contenido</h2>
-              <p className="text-xs text-zinc-500">Visualiza los guiones programados y prepara el equipo</p>
-            </div>
-            <span className="text-xs text-zinc-400 font-medium self-start bg-zinc-900 border border-zinc-800 px-3 py-1.5 rounded-xl">
-              Total programados: {scripts.length}
-            </span>
-          </div>
+        {/* ---------- Card 4: Checklist (materiales + aprobación del equipo) ---------- */}
+        <section
+          className={`${isAdmin ? 'xl:col-span-5' : 'xl:col-span-12'} rounded-3xl p-5 sm:p-6`}
+          style={{ background: '#FFFDF8', border: '1px solid #F0E2C7', boxShadow: '0 10px 30px -18px rgba(178,101,20,0.35)' }}
+        >
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 600 }} className="text-xl mb-1">
+            Checklist
+          </h2>
+          <p className="text-xs mb-5" style={{ color: '#A0865F' }}>
+            Materiales para el día seleccionado
+          </p>
 
-          {scripts.length === 0 ? (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-12 text-center text-zinc-500">
-              No hay guiones programados en este momento.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {scripts.map((script) => (
-                <article
-                  key={script.id}
-                  className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5 flex flex-col justify-between hover:border-zinc-700 transition shadow-md"
-                >
-                  <div className="space-y-3">
-                    {/* Fecha y Badge de Tipo */}
-                    <div className="flex items-center justify-between">
-                      <time className="text-xs text-orange-500 font-semibold uppercase tracking-wider">
-                        {new Date(script.scheduledDate + 'T00:00:00').toLocaleDateString('es-ES', {
-                          weekday: 'short',
-                          day: 'numeric',
-                          month: 'short',
-                        })}
-                      </time>
-                      <span className={`text-[9px] font-bold tracking-wider px-2.5 py-1 rounded-full ${
-                        script.videoType === 'SHORT'
-                          ? 'bg-green-500/10 text-green-400 border border-green-500/10'
-                          : 'bg-blue-500/10 text-blue-400 border border-blue-500/10'
-                      }`}>
-                        {script.videoType === 'SHORT' ? 'Vertical (Short)' : 'Horizontal'}
-                      </span>
-                    </div>
+          {!selectedScript && (
+            <p className="text-sm" style={{ color: '#A0865F' }}>
+              Elige un día con guion programado para ver su checklist.
+            </p>
+          )}
 
-                    {/* Título y Tema */}
-                    <div>
-                      <h3 className="text-md font-bold text-white line-clamp-1">{script.title}</h3>
-                      <p className="text-xs text-zinc-400 mt-0.5"><span className="text-zinc-600 font-semibold uppercase text-[10px]">Idea:</span> {script.theme}</p>
-                    </div>
+          {selectedScript && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                {materialsList.map((item, idx) => {
+                  const itemKey = `${selectedScript.id}-${idx}`;
+                  const checked = checkedItems.has(itemKey);
+                  return (
+                    <label
+                      key={itemKey}
+                      className="flex items-center gap-3 text-sm px-3 py-2.5 rounded-xl cursor-pointer"
+                      style={{ background: '#F5F0E1' }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleChecklistItem(itemKey)}
+                        className="w-4 h-4 rounded"
+                        style={{ accentColor: '#F27B1C' }}
+                      />
+                      <span style={checked ? { textDecoration: 'line-through', color: '#A0865F' } : {}}>{item}</span>
+                    </label>
+                  );
+                })}
+              </div>
 
-                    {/* Lista de materiales requeridos */}
-                    <div className="pt-3 border-t border-zinc-800/60">
-                      <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Materiales Requeridos:</h4>
-                      <p className="text-xs text-zinc-300 bg-zinc-950/40 border border-zinc-800/40 p-3 rounded-xl leading-relaxed whitespace-pre-wrap">
-                        {script.materials}
-                      </p>
+              {/* Estado / acción de aprobación — visible solo para el rol correspondiente */}
+              <div className="pt-2">
+                {!isAdmin &&
+                  (selectedScript.status === 'APROBADO' ? (
+                    <div
+                      className="text-center text-sm font-semibold px-4 py-3 rounded-xl"
+                      style={{ background: '#DCEEDB', color: '#3E7A34' }}
+                    >
+                      Fecha Confirmada por el Equipo 🥕✔
                     </div>
+                  ) : (
+                    <button
+                      onClick={() => handleApprove(selectedScript.id)}
+                      disabled={approvingId === selectedScript.id}
+                      className="w-full py-3 font-semibold rounded-xl text-sm transition"
+                      style={{
+                        background: approvingId === selectedScript.id ? '#F6C08A' : '#F27B1C',
+                        color: '#FFFDF8',
+                      }}
+                    >
+                      {approvingId === selectedScript.id ? 'Confirmando...' : 'Aprobar Fecha para Grabación'}
+                    </button>
+                  ))}
+
+                {isAdmin && (
+                  <div
+                    className="text-center text-xs font-semibold px-4 py-2.5 rounded-xl"
+                    style={
+                      selectedScript.status === 'APROBADO'
+                        ? { background: '#DCEEDB', color: '#3E7A34' }
+                        : { background: '#FCE3C6', color: '#B5540A' }
+                    }
+                  >
+                    {selectedScript.status === 'APROBADO'
+                      ? 'Equipo confirmó esta fecha ✔'
+                      : 'Esperando confirmación del equipo'}
                   </div>
-                </article>
-              ))}
+                )}
+              </div>
             </div>
           )}
         </section>
