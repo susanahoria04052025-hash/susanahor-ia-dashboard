@@ -19,6 +19,13 @@
         "models": {
           "Script": {
             "fields": {
+              "content": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -102,6 +109,9 @@
             },
             "storage": {
               "fields": {
+                "content": {
+                  "column": "content"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
@@ -222,6 +232,11 @@
           "table": {
             "script": {
               "columns": {
+                "content": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -354,7 +369,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "10919815bd78c54ccf0232799e98f1411acbd4ee3132d8d3d0c0a0d4daf9012a"
+    "storageHash": "e404552b86c6f971493ed3d2e46277b60c2c1541477aadf4b25581a7021731db"
   },
   "capabilities": {
     "postgres": {

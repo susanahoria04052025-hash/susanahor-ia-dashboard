@@ -60,6 +60,7 @@ export async function createScript(formData: FormData) {
       videoType,
       theme,
       materials,
+      content: '', // El texto del guion se redacta después, desde la Card de Guiones
       status: 'PENDIENTE', // Todo guion nuevo nace pendiente de aprobación del equipo
       createdById: user.id,
       createdAt: new Date().toISOString(),
@@ -93,6 +94,30 @@ export async function approveScript(scriptId: string) {
   } catch (error) {
     console.error('Error al aprobar guion:', error);
     return { success: false, error: 'Error al confirmar la fecha en el servidor.' };
+  }
+}
+
+// Guardar el texto redactado del guion (usado desde la Card de Guiones)
+export async function updateScriptContent(scriptId: string, content: string) {
+  const user = await getCurrentUser();
+
+  // Protección por código: requiere sesión activa. La UI ya restringe la edición
+  // a ADMIN (el USER ve el textarea en modo lectura), pero validamos igual aquí
+  // por si en el futuro se habilita edición a otros roles.
+  if (!user) {
+    return { success: false, error: 'Debes iniciar sesión para guardar el guion.' };
+  }
+
+  if (!scriptId) {
+    return { success: false, error: 'Guion no válido.' };
+  }
+
+  try {
+    await db.orm.public.Script.where({ id: scriptId }).update({ content });
+    return { success: true };
+  } catch (error) {
+    console.error('Error al guardar el guion:', error);
+    return { success: false, error: 'Error al guardar el guion en el servidor.' };
   }
 }
 

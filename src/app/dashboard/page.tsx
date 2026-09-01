@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Fredoka, Inter } from 'next/font/google';
-import { getCurrentUser, getScripts, createScript, approveScript, logout } from '@/app/actions/scripts';
+import { getCurrentUser, getScripts, createScript, approveScript, updateScriptContent, logout } from '@/app/actions/scripts';
 
 // Tipografía: Fredoka para titulares (redonda, juguetona — encaja con un canal de una
 // creadora de 12 años) + Inter para texto de cuerpo, legible en paneles densos.
@@ -24,6 +24,7 @@ interface Script {
   theme: string;
   materials: string;
   status: string; // 'PENDIENTE' | 'APROBADO'
+  content?: string | null; // Texto completo del guion, redactado desde la Card de Guiones
 }
 
 const SEPT_YEAR = 2026;
@@ -51,6 +52,8 @@ export default function DashboardPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<string | null>(null);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [draftContent, setDraftContent] = useState('');
+  const [savingContent, setSavingContent] = useState(false);
   const router = useRouter();
 
   // Carga inicial de datos de sesión y guiones
@@ -89,6 +92,13 @@ export default function DashboardPage() {
       setFormDate(selectedDate);
     }
   }, [selectedDate, scriptsByDate, user]);
+
+  // Al cambiar de guion seleccionado, cargamos su contenido guardado en el borrador.
+  // Dependemos solo del id: así no pisamos lo que el ADMIN está escribiendo si
+  // `scripts` se refresca por otro motivo (ej. otro usuario aprobando otra fecha).
+  useEffect(() => {
+    setDraftContent(selectedScript?.content ?? '');
+  }, [selectedScript?.id]);
 
   const handleLogout = async () => {
     await logout();
@@ -134,6 +144,25 @@ export default function DashboardPage() {
     setApprovingId(null);
   };
 
+  // Guardado reactivo del texto del guion: igual patrón optimista que la aprobación.
+  const handleSaveContent = async () => {
+    if (!selectedScript) return;
+    const scriptId = selectedScript.id;
+    const prevContent = selectedScript.content ?? '';
+
+    setSavingContent(true);
+    setError('');
+    setScripts((prev) => prev.map((s) => (s.id === scriptId ? { ...s, content: draftContent } : s)));
+
+    const res = await updateScriptContent(scriptId, draftContent);
+
+    if (!res.success) {
+      setScripts((prev) => prev.map((s) => (s.id === scriptId ? { ...s, content: prevContent } : s)));
+      setError(res.error || 'Error al guardar el guion.');
+    }
+    setSavingContent(false);
+  };
+
   const toggleChecklistItem = (key: string) => {
     setCheckedItems((prev) => {
       const next = new Set(prev);
@@ -166,7 +195,7 @@ export default function DashboardPage() {
     >
       {/* ===== Cabecera ===== */}
       <header
-        className="sticky top-0 z-40 px-5 sm:px-8 py-4 flex items-center justify-between border-b"
+        className="print:hidden sticky top-0 z-40 px-5 sm:px-8 py-4 flex items-center justify-between border-b"
         style={{ background: 'rgba(251,243,231,0.9)', backdropFilter: 'blur(8px)', borderColor: '#EFE1CB' }}
       >
         <div className="flex items-center gap-3">
@@ -206,7 +235,7 @@ export default function DashboardPage() {
       </header>
 
       {error && (
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-4">
+        <div className="print:hidden max-w-7xl mx-auto px-5 sm:px-8 pt-4">
           <p className="text-xs px-4 py-2.5 rounded-xl" style={{ background: '#FBE4DC', color: '#B0431F', border: '1px solid #F3B9A4' }}>
             {error}
           </p>
@@ -214,7 +243,7 @@ export default function DashboardPage() {
       )}
 
       {/* ===== Contenedor principal ===== */}
-      <main className="px-5 sm:px-8 py-6 max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-6">
+      <main className="print:hidden px-5 sm:px-8 py-6 max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-12 gap-6">
         {/* ---------- Card 1: Agenda (calendario interactivo) ---------- */}
         <section
           className="xl:col-span-7 rounded-3xl p-5 sm:p-6"
@@ -326,6 +355,49 @@ export default function DashboardPage() {
               <p className="text-xs" style={{ color: '#6B5A3E' }}>
                 <span className="font-semibold">Enfoque:</span> {selectedScript.theme}
               </p>
+
+              {/* ---- Redacción del guion + impresión ---- */}
+              <div className="pt-3 border-t" style={{ borderColor: '#E4D5B6' }}>
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <h4 className="text-[10px] font-bold uppercase tracking-wide" style={{ color: '#8A7B68' }}>
+                    Redactar Guion del Video
+                  </h4>
+                  <button
+                    type="button"
+                    onClick={() => window.print()}
+                    className="shrink-0 text-[10px] font-semibold px-3 py-1.5 rounded-lg transition"
+                    style={{ background: '#2B2118', color: '#FBF3E7' }}
+                  >
+                    Descargar PDF / Imprimir 🖨
+                  </button>
+                </div>
+
+                <textarea
+                  value={isAdmin ? draftContent : selectedScript.content ?? ''}
+                  onChange={isAdmin ? (e) => setDraftContent(e.target.value) : undefined}
+                  readOnly={!isAdmin}
+                  rows={8}
+                  placeholder={isAdmin ? 'Escribe o pega aquí el guion completo...' : 'El guion aún no ha sido redactado.'}
+                  className="w-full px-3 py-2.5 rounded-xl text-xs leading-relaxed outline-none resize-y"
+                  style={{
+                    border: '1px solid #EAD9B4',
+                    background: isAdmin ? '#FFFDF8' : '#EFE6D2',
+                    color: '#3A2E1E',
+                  }}
+                />
+
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={handleSaveContent}
+                    disabled={savingContent}
+                    className="mt-2 w-full py-2.5 font-semibold rounded-xl text-xs transition"
+                    style={{ background: savingContent ? '#F6C08A' : '#F27B1C', color: '#FFFDF8' }}
+                  >
+                    {savingContent ? 'Guardando...' : 'Guardar Cambios del Guion'}
+                  </button>
+                )}
+              </div>
             </div>
           )}
 
@@ -547,6 +619,83 @@ export default function DashboardPage() {
           )}
         </section>
       </main>
+
+      {/* ===== Hoja de producción — visible ÚNICAMENTE al imprimir / exportar PDF ===== */}
+      {selectedScript && (
+        <div className="hidden print:block bg-white text-[#1A1410] px-2">
+          <div className="flex items-start justify-between border-b-2 pb-4 mb-6" style={{ borderColor: '#1A1410' }}>
+            <div className="flex items-center gap-3">
+              <img src="/assets/icon.jpg" alt="Susanahoria" className="w-14 h-14 rounded-xl" />
+              <div>
+                <p className="text-[10px] font-bold tracking-widest" style={{ color: '#B5540A' }}>
+                  SUSANAHORIA CMS — HOJA DE PRODUCCIÓN
+                </p>
+                <h1 className="text-2xl font-bold">{selectedScript.title}</h1>
+              </div>
+            </div>
+            <div className="text-right text-xs leading-relaxed">
+              <p>
+                <span className="font-semibold">Fecha:</span>{' '}
+                {new Date(selectedScript.scheduledDate + 'T00:00:00').toLocaleDateString('es-ES', {
+                  weekday: 'long',
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </p>
+              <p>
+                <span className="font-semibold">Formato:</span>{' '}
+                {selectedScript.videoType === 'SHORT' ? 'Vertical (Short)' : 'Horizontal'}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="rounded-lg p-4" style={{ border: '1px solid #1A1410' }}>
+              <h2 className="text-[10px] font-bold uppercase tracking-wide mb-1.5">Idea Central</h2>
+              <p className="text-sm">{selectedScript.theme}</p>
+            </div>
+            <div className="rounded-lg p-4" style={{ border: '1px solid #1A1410' }}>
+              <h2 className="text-[10px] font-bold uppercase tracking-wide mb-1.5">Lista de Materiales</h2>
+              <ul className="text-sm list-disc list-inside space-y-0.5">
+                {materialsList.map((m, idx) => (
+                  <li key={idx}>{m}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          <div className="mb-10">
+            <h2 className="text-[10px] font-bold uppercase tracking-wide mb-2 border-b pb-1" style={{ borderColor: '#1A1410' }}>
+              Guion Completo
+            </h2>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {selectedScript.content?.trim() ? selectedScript.content : 'Este guion aún no ha sido redactado.'}
+            </p>
+          </div>
+
+          <div className="text-center text-[10px] pt-4 border-t" style={{ borderColor: '#1A1410', color: '#8A7B68' }}>
+            Susanahoria — Creatividad Digital
+          </div>
+        </div>
+      )}
+
+      {/* Ajustes de página al imprimir: márgenes y colores exactos de marca */}
+      <style jsx global>{`
+        @media print {
+          @page {
+            margin: 1.4cm;
+          }
+          html,
+          body {
+            background: #ffffff !important;
+          }
+          * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+        }
+      `}</style>
     </div>
   );
 }
