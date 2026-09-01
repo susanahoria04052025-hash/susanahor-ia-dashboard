@@ -263,7 +263,7 @@ export default function DashboardPage() {
             <button
               key={key}
               onClick={() => setSelectedDate(key)}
-              className="aspect-square rounded-xl flex flex-col items-center justify-center text-sm font-semibold transition"
+              className="relative aspect-square rounded-xl flex items-center justify-center text-sm font-semibold transform transition-all duration-150 ease-out hover:scale-105 hover:shadow-md active:scale-90"
               style={
                 isSelected
                   ? { background: '#2B2118', color: '#FBF3E7' }
@@ -273,7 +273,24 @@ export default function DashboardPage() {
               }
             >
               <span>{day}</span>
-              {script && <span className="text-[9px] mt-0.5">{isApproved ? '✔' : '●'}</span>}
+              {script && (
+                <span
+                  className="absolute -bottom-1 -right-1 flex items-center justify-center rounded-full"
+                  style={{ width: 16, height: 16, background: '#FFFFFF', boxShadow: '0 1px 3px rgba(43,33,24,0.25)' }}
+                >
+                  {/* Icono de cámara de video — indicador delicado de pauta agendada */}
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="6" width="14" height="12" rx="2" stroke="#10B981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path
+                      d="m16 10.5 5.223-3.062a.5.5 0 0 1 .777.416v8.292a.5.5 0 0 1-.777.416L16 13"
+                      stroke="#10B981"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              )}
             </button>
           );
         })}
