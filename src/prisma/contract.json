@@ -54,6 +54,13 @@
                   "kind": "scalar"
                 }
               },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "theme": {
                 "nullable": false,
                 "type": {
@@ -109,6 +116,9 @@
                 },
                 "scheduledDate": {
                   "column": "scheduledDate"
+                },
+                "status": {
+                  "column": "status"
                 },
                 "theme": {
                   "column": "theme"
@@ -237,6 +247,15 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "PENDIENTE"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "theme": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
@@ -335,7 +354,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "2e08c879f32baea63cb757256a907bb961653d5039c97587e1624a3cbbc42079"
+    "storageHash": "10919815bd78c54ccf0232799e98f1411acbd4ee3132d8d3d0c0a0d4daf9012a"
   },
   "capabilities": {
     "postgres": {

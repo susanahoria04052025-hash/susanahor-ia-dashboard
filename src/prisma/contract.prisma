@@ -3,7 +3,7 @@ model User {
   name      String
   pattern   String   // Secuencia del patrón encriptada
   role      String   @default("USER") // Valores recomendados: "ADMIN" o "USER"
-  createdAt String   // Guardado como string ISO (ej: "2026-08-28T16:01:00Z")
+  createdAt String   // Guardado como string ISO
   scripts   Script[]
   @@map("user")
 }
@@ -11,12 +11,13 @@ model User {
 model Script {
   id            String   @id // Generado con crypto.randomUUID() en el código
   title         String
-  scheduledDate String   // Fecha programada en string (ej: "2026-08-30")
+  scheduledDate String   // Fecha programada en string (ej: "2026-09-15")
   videoType     String   // Valores recomendados: "SHORT" o "HORIZONTAL"
   theme         String
   materials     String   // Lista de materiales como texto plano
   createdById   String
   createdBy     User     @relation(fields: [createdById], references: [id])
   createdAt     String   // Guardado como string ISO
+  status        String   @default("PENDIENTE") // <--- AGREGA ESTA LÍNEA EXACTAMENTE AQUÍ
   @@map("script")
 }
